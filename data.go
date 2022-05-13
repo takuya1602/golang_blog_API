@@ -22,6 +22,19 @@ func retrieveParentCategory(parent_category_id int) (parentCategory ParentCatego
 	return
 }
 
+func retrieveParentCategories() (parentCategories []ParentCategory, err error) {
+	rows, err := Db.Query("select * from parent_categories")
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		parentCategory := ParentCategory{}
+		rows.Scan(&parentCategory.Id, &parentCategory.CategoryName, &parentCategory.Slug)
+		parentCategories = append(parentCategories, parentCategory)
+	}
+	return
+}
+
 func retrieveCategory(category_id int) (category Category, err error) {
 	var parentCategoryId int
 	category = Category{}
@@ -43,6 +56,28 @@ func retrievePost(id int) (post Post, err error) {
 		return
 	}
 	post.Category = &category
+	return
+}
+
+func (parentCategory *ParentCategory) create() (err error) {
+	err = Db.QueryRow("insert into parent_categories (category_name, slug) values ($1, $2) returning id", parentCategory.CategoryName, parentCategory.Slug).Scan(&parentCategory.Id)
+	return
+}
+
+func (parentCategory *ParentCategory) update() (err error) {
+	_, err = Db.Exec("update parent_categories set category_name = $2, slug = $3 where id = $1",
+		parentCategory.Id, parentCategory.CategoryName, parentCategory.Slug)
+	return
+}
+
+func (parentCategory *ParentCategory) delete() (err error) {
+	_, err = Db.Exec("delete from parent_categories where id = $1", parentCategory.Id)
+	return
+}
+
+func (category *Category) create() (err error) {
+	err = Db.QueryRow("insert into categories (category_name, slug, parent_category_id) values ($1, $2, $3) returning id",
+		category.CategoryName, category.Slug, category.ParentCategory.Id).Scan(&category.Id)
 	return
 }
 

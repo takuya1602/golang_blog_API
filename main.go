@@ -35,26 +35,27 @@ func main() {
 	server := http.Server{
 		Addr: "127.0.0.1:8080",
 	}
-	http.HandleFunc("/posts/", handleRequest)
+	http.HandleFunc("/parent-categories/", handleRequestParentCategory)
+	http.HandleFunc("/posts/", handleRequestPosts)
 	http.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir("media"))))
 
 	server.ListenAndServe()
 }
 
-func handleRequest(w http.ResponseWriter, r *http.Request) {
+func handleRequestParentCategory(w http.ResponseWriter, r *http.Request) {
 	var err error
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	switch r.Method {
 	case "GET":
-		err = handleGet(w, r)
+		err = handleGetParentCategory(w, r)
 	case "POST":
-		err = handlePost(w, r)
+		err = handlePostParentCategory(w, r)
 	case "PUT":
-		err = handlePut(w, r)
+		err = handlePutParentCategory(w, r)
 	case "DELETE":
-		err = handleDelete(w, r)
+		err = handleDeleteParentCategory(w, r)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,7 +63,94 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGet(w http.ResponseWriter, r *http.Request) (err error) {
+func handleGetParentCategory(w http.ResponseWriter, r *http.Request) (err error) {
+	parentCategory, err := retrieveParentCategories()
+	if err != nil {
+		return
+	}
+	output, err := json.MarshalIndent(&parentCategory, "", "\t")
+	if err != nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(output)
+	return
+}
+
+func handlePostParentCategory(w http.ResponseWriter, r *http.Request) (err error) {
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	parentCategory := ParentCategory{}
+	json.Unmarshal(body, &parentCategory)
+	err = parentCategory.create()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(200)
+	return
+}
+
+func handlePutParentCategory(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	parentCategory, err := retrieveParentCategory(id)
+	if err != nil {
+		return
+	}
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	json.Unmarshal(body, &parentCategory)
+	err = parentCategory.update()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(200)
+	return
+}
+
+func handleDeleteParentCategory(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	parentCategory, err := retrieveParentCategory(id)
+	if err != nil {
+		return
+	}
+	err = parentCategory.delete()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(200)
+	return
+}
+
+func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
+	var err error
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	switch r.Method {
+	case "GET":
+		err = handleGetPosts(w, r)
+	case "POST":
+		err = handlePostPosts(w, r)
+	case "PUT":
+		err = handlePutPosts(w, r)
+	case "DELETE":
+		err = handleDeletePosts(w, r)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func handleGetPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	id, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil {
 		return
@@ -80,7 +168,7 @@ func handleGet(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePost(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePostPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
@@ -94,7 +182,7 @@ func handlePost(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePut(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePutPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	id, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil {
 		return
@@ -115,7 +203,7 @@ func handlePut(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleDelete(w http.ResponseWriter, r *http.Request) (err error) {
+func handleDeletePosts(w http.ResponseWriter, r *http.Request) (err error) {
 	id, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil {
 		return
