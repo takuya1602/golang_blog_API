@@ -35,27 +35,37 @@ func retrieveParentCategories() (parentCategories []ParentCategory, err error) {
 	return
 }
 
-func retrieveCategory(category_id int) (category Category, err error) {
-	var parentCategoryId int
-	category = Category{}
-	err = Db.QueryRow("select id, category_name, slug, parent_category_id from categories where id = $1", category_id).Scan(&category.Id, &category.CategoryName, &category.Slug, &parentCategoryId)
-	parentCategory, err := retrieveParentCategory(parentCategoryId)
+func retrieveCategories() (categories []Category, err error) {
+	rows, err := Db.Query("select * from categories")
 	if err != nil {
 		return
 	}
-	category.ParentCategory = &parentCategory
+	for rows.Next() {
+		category := Category{}
+		rows.Scan(&category.Id, &category.CategoryName, &category.Slug, &category.ParentCategoryId)
+		if err != nil {
+			return
+		}
+		categories = append(categories, category)
+	}
+	return
+}
+
+func retrieveCategory(category_id int) (category Category, err error) {
+	category = Category{}
+	err = Db.QueryRow("select id, category_name, slug, parent_category_id from categories where id = $1", category_id).Scan(&category.Id, &category.CategoryName, &category.Slug, &category.ParentCategoryId)
+	if err != nil {
+		return
+	}
 	return
 }
 
 func retrievePost(id int) (post Post, err error) {
-	var categoryId int
 	post = Post{}
-	err = Db.QueryRow("select id, slug, title, content, eye_catching_img, category_id from posts where id = $1", id).Scan(&post.Id, &post.Slug, &post.Title, &post.Content, &post.EyeCatchingImg, &categoryId)
-	category, err := retrieveCategory(categoryId)
+	err = Db.QueryRow("select id, slug, title, content, eye_catching_img, category_id from posts where id = $1", id).Scan(&post.Id, &post.Slug, &post.Title, &post.Content, &post.EyeCatchingImg, &post.CategoryId)
 	if err != nil {
 		return
 	}
-	post.Category = &category
 	return
 }
 
@@ -77,19 +87,30 @@ func (parentCategory *ParentCategory) delete() (err error) {
 
 func (category *Category) create() (err error) {
 	err = Db.QueryRow("insert into categories (category_name, slug, parent_category_id) values ($1, $2, $3) returning id",
-		category.CategoryName, category.Slug, category.ParentCategory.Id).Scan(&category.Id)
+		category.CategoryName, category.Slug, category.ParentCategoryId).Scan(&category.Id)
+	return
+}
+
+func (category *Category) update() (err error) {
+	_, err = Db.Exec("update categories set category_name = $2, slug = $3, parent_category_id = $4 where id = $1",
+		category.Id, category.CategoryName, category.Slug, category.ParentCategoryId)
+	return
+}
+
+func (category *Category) delete() (err error) {
+	_, err = Db.Exec("delete from categories where id = $1", category.Id)
 	return
 }
 
 func (post *Post) create() (err error) {
 	err = Db.QueryRow("insert into posts (slug, category_id, title, content, eye_catching_img) values ($1, $2, $3, $4, $5) returning id",
-		post.Slug, post.Category.Id, post.Title, post.Content, post.EyeCatchingImg).Scan(&post.Id)
+		post.Slug, post.CategoryId, post.Title, post.Content, post.EyeCatchingImg).Scan(&post.Id)
 	return
 }
 
 func (post *Post) update() (err error) {
 	_, err = Db.Exec("update posts set slug = $2, category_id = $3, title = $4, content = $5, eye_catching_img = $6 where id = $1",
-		post.Slug, post.Category.Id, post.Id, post.Title, post.Content, post.EyeCatchingImg)
+		post.Slug, post.CategoryId, post.Id, post.Title, post.Content, post.EyeCatchingImg)
 	return
 }
 
