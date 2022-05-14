@@ -137,7 +137,12 @@ func handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	switch r.Method {
 	case "GET":
-		err = handleGetCategory(w, r)
+		slug := path.Base(r.URL.Path)
+		if slug == "categories" {
+			err = handleGetCategories(w, r)
+		} else {
+			err = handleGetCategoryPosts(w, r, slug)
+		}
 	case "POST":
 		err = handlePostCategory(w, r)
 	case "PUT":
@@ -151,12 +156,26 @@ func handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGetCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handleGetCategories(w http.ResponseWriter, r *http.Request) (err error) {
 	categories, err := retrieveCategories()
 	if err != nil {
 		return
 	}
 	output, err := json.MarshalIndent(&categories, "", "\t")
+	if err != nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(output)
+	return
+}
+
+func handleGetCategoryPosts(w http.ResponseWriter, r *http.Request, slug string) (err error) {
+	posts, err := retrieveCategoryPosts(slug)
+	if err != nil {
+		return
+	}
+	output, err := json.MarshalIndent(&posts, "", "\t")
 	if err != nil {
 		return
 	}
@@ -231,11 +250,11 @@ func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
 			err = handleGetPost(w, r, slug)
 		}
 	case "POST":
-		err = handlePostPosts(w, r)
+		err = handlePostPost(w, r)
 	case "PUT":
-		err = handlePutPosts(w, r)
+		err = handlePutPost(w, r)
 	case "DELETE":
-		err = handleDeletePosts(w, r)
+		err = handleDeletePost(w, r)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -271,7 +290,7 @@ func handleGetPost(w http.ResponseWriter, r *http.Request, slug string) (err err
 	return
 }
 
-func handlePostPosts(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePostPost(w http.ResponseWriter, r *http.Request) (err error) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
@@ -285,7 +304,7 @@ func handlePostPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePutPosts(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePutPost(w http.ResponseWriter, r *http.Request) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
@@ -306,7 +325,7 @@ func handlePutPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleDeletePosts(w http.ResponseWriter, r *http.Request) (err error) {
+func handleDeletePost(w http.ResponseWriter, r *http.Request) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return

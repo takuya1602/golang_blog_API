@@ -57,6 +57,24 @@ func retrieveCategory(category_id int) (category Category, err error) {
 	return
 }
 
+func retrieveCategoryPosts(slug string) (posts []Post, err error) {
+	var categoryId int
+	err = Db.QueryRow("select id from categories where slug = $1", slug).Scan(&categoryId)
+	if err != nil {
+		return
+	}
+	rows, err := Db.Query("select * from posts where category_id = $1", categoryId)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		post := Post{}
+		rows.Scan(&post.Id, &post.CategoryId, &post.Title, &post.Content, &post.Slug, &post.EyeCatchingImg)
+		posts = append(posts, post)
+	}
+	return
+}
+
 func retrievePosts() (posts []Post, err error) {
 	rows, err := Db.Query("select * from posts")
 	if err != nil {
