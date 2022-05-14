@@ -43,9 +43,6 @@ func retrieveCategories() (categories []Category, err error) {
 	for rows.Next() {
 		category := Category{}
 		rows.Scan(&category.Id, &category.CategoryName, &category.Slug, &category.ParentCategoryId)
-		if err != nil {
-			return
-		}
 		categories = append(categories, category)
 	}
 	return
@@ -60,9 +57,22 @@ func retrieveCategory(category_id int) (category Category, err error) {
 	return
 }
 
-func retrievePost(id int) (post Post, err error) {
+func retrievePosts() (posts []Post, err error) {
+	rows, err := Db.Query("select * from posts")
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		post := Post{}
+		rows.Scan(&post.Id, &post.CategoryId, &post.Title, &post.Content, &post.Slug, &post.EyeCatchingImg)
+		posts = append(posts, post)
+	}
+	return
+}
+
+func retrievePost(slug string) (post Post, err error) {
 	post = Post{}
-	err = Db.QueryRow("select id, slug, title, content, eye_catching_img, category_id from posts where id = $1", id).Scan(&post.Id, &post.Slug, &post.Title, &post.Content, &post.EyeCatchingImg, &post.CategoryId)
+	err = Db.QueryRow("select id, slug, title, content, eye_catching_img, category_id from posts where slug = $1", slug).Scan(&post.Id, &post.Slug, &post.Title, &post.Content, &post.EyeCatchingImg, &post.CategoryId)
 	if err != nil {
 		return
 	}

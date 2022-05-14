@@ -224,7 +224,12 @@ func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	switch r.Method {
 	case "GET":
-		err = handleGetPosts(w, r)
+		slug := path.Base(r.URL.Path)
+		if slug == "posts" {
+			err = handleGetPosts(w, r)
+		} else {
+			err = handleGetPost(w, r, slug)
+		}
 	case "POST":
 		err = handlePostPosts(w, r)
 	case "PUT":
@@ -239,11 +244,21 @@ func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetPosts(w http.ResponseWriter, r *http.Request) (err error) {
-	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	posts, err := retrievePosts()
 	if err != nil {
 		return
 	}
-	post, err := retrievePost(id)
+	output, err := json.MarshalIndent(&posts, "", "\t")
+	if err != nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(output)
+	return
+}
+
+func handleGetPost(w http.ResponseWriter, r *http.Request, slug string) (err error) {
+	post, err := retrievePost(slug)
 	if err != nil {
 		return
 	}
@@ -271,11 +286,11 @@ func handlePostPosts(w http.ResponseWriter, r *http.Request) (err error) {
 }
 
 func handlePutPosts(w http.ResponseWriter, r *http.Request) (err error) {
-	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	post, err := retrievePost(id)
+	post, err := retrievePost(slug)
 	if err != nil {
 		return
 	}
@@ -292,11 +307,11 @@ func handlePutPosts(w http.ResponseWriter, r *http.Request) (err error) {
 }
 
 func handleDeletePosts(w http.ResponseWriter, r *http.Request) (err error) {
-	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	post, err := retrievePost(id)
+	post, err := retrievePost(slug)
 	if err != nil {
 		return
 	}
