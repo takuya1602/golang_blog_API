@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"path"
@@ -8,6 +9,10 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+type Env struct {
+	Db *sql.DB
+}
 
 type Category struct {
 	Id           int    `json:"id"`
@@ -37,31 +42,36 @@ type Post struct {
 }
 
 func main() {
+	db, err := sql.Open("postgres", "user=gwp password=gwp dbname=go_blog sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+	e := Env{Db: db}
 	server := http.Server{
 		Addr: "127.0.0.1:8080",
 	}
-	http.HandleFunc("/categories/", handleRequestCategory)
-	http.HandleFunc("/sub-categories/", handleRequestSubCategory)
-	http.HandleFunc("/posts/", handleRequestPosts)
+	http.HandleFunc("/categories/", e.handleRequestCategory)
+	http.HandleFunc("/sub-categories/", e.handleRequestSubCategory)
+	http.HandleFunc("/posts/", e.handleRequestPosts)
 	http.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir("media"))))
 
 	server.ListenAndServe()
 }
 
-func handleRequestCategory(w http.ResponseWriter, r *http.Request) {
+func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	var err error
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	switch r.Method {
 	case "GET":
-		err = handleGetCategory(w, r)
+		err = handleGetCategory(w, r, e.Db)
 	case "POST":
-		err = handlePostCategory(w, r)
+		err = handlePostCategory(w, r, e.Db)
 	case "PUT":
-		err = handlePutCategory(w, r)
+		err = handlePutCategory(w, r, e.Db)
 	case "DELETE":
-		err = handleDeleteCategory(w, r)
+		err = handleDeleteCategory(w, r, e.Db)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -69,8 +79,8 @@ func handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGetCategory(w http.ResponseWriter, r *http.Request) (err error) {
-	category, err := retrieveCategories()
+func handleGetCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
+	category, err := retrieveCategories(db)
 	if err != nil {
 		return
 	}
@@ -83,13 +93,13 @@ func handleGetCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePostCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePostCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
 	category := Category{}
 	json.Unmarshal(body, &category)
-	err = category.create()
+	err = category.create(db)
 	if err != nil {
 		return
 	}
@@ -97,12 +107,12 @@ func handlePostCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePutCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePutCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	category, err := retrieveCategory(slug)
+	category, err := retrieveCategory(db, slug)
 	if err != nil {
 		return
 	}
@@ -110,7 +120,7 @@ func handlePutCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	body := make([]byte, len)
 	r.Body.Read(body)
 	json.Unmarshal(body, &category)
-	err = category.update()
+	err = category.update(db)
 	if err != nil {
 		return
 	}
@@ -118,16 +128,16 @@ func handlePutCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleDeleteCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handleDeleteCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	category, err := retrieveCategory(slug)
+	category, err := retrieveCategory(db, slug)
 	if err != nil {
 		return
 	}
-	err = category.delete()
+	err = category.delete(db)
 	if err != nil {
 		return
 	}
@@ -135,20 +145,20 @@ func handleDeleteCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
+func (e *Env) handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	var err error
 	switch r.Method {
 	case "GET":
-		err = handleGetSubCategory(w, r)
+		err = handleGetSubCategory(w, r, e.Db)
 	case "POST":
-		err = handlePostSubCategory(w, r)
+		err = handlePostSubCategory(w, r, e.Db)
 	case "PUT":
-		err = handlePutSubCategory(w, r)
+		err = handlePutSubCategory(w, r, e.Db)
 	case "DELETE":
-		err = handleDeleteSubCategory(w, r)
+		err = handleDeleteSubCategory(w, r, e.Db)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -156,8 +166,8 @@ func handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGetSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
-	subCategories, err := retrieveSubCategories(r.URL.Query())
+func handleGetSubCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
+	subCategories, err := retrieveSubCategories(db, r.URL.Query())
 	if err != nil {
 		return
 	}
@@ -170,13 +180,13 @@ func handleGetSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePostSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePostSubCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
 	subCategory := SubCategory{}
 	json.Unmarshal(body, &subCategory)
-	err = subCategory.create()
+	err = subCategory.create(db)
 	if err != nil {
 		return
 	}
@@ -184,12 +194,12 @@ func handlePostSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePutSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePutSubCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	subCategory, err := retrieveSubCategory(slug)
+	subCategory, err := retrieveSubCategory(db, slug)
 	if err != nil {
 		return
 	}
@@ -197,7 +207,7 @@ func handlePutSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	body := make([]byte, len)
 	r.Body.Read(body)
 	json.Unmarshal(body, &subCategory)
-	err = subCategory.update()
+	err = subCategory.update(db)
 	if err != nil {
 		return
 	}
@@ -205,16 +215,16 @@ func handlePutSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleDeleteSubCategory(w http.ResponseWriter, r *http.Request) (err error) {
+func handleDeleteSubCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	subCategory, err := retrieveSubCategory(slug)
+	subCategory, err := retrieveSubCategory(db, slug)
 	if err != nil {
 		return
 	}
-	err = subCategory.delete()
+	err = subCategory.delete(db)
 	if err != nil {
 		return
 	}
@@ -222,7 +232,7 @@ func handleDeleteSubCategory(w http.ResponseWriter, r *http.Request) (err error)
 	return
 }
 
-func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
+func (e *Env) handleRequestPosts(w http.ResponseWriter, r *http.Request) {
 	var err error
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -231,16 +241,16 @@ func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		slug := path.Base(r.URL.Path)
 		if slug == "posts" {
-			err = handleGetPosts(w, r)
+			err = handleGetPosts(w, r, e.Db)
 		} else {
-			err = handleGetPost(w, r, slug)
+			err = handleGetPost(w, r, e.Db, slug)
 		}
 	case "POST":
-		err = handlePostPost(w, r)
+		err = handlePostPost(w, r, e.Db)
 	case "PUT":
-		err = handlePutPost(w, r)
+		err = handlePutPost(w, r, e.Db)
 	case "DELETE":
-		err = handleDeletePost(w, r)
+		err = handleDeletePost(w, r, e.Db)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -248,8 +258,8 @@ func handleRequestPosts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGetPosts(w http.ResponseWriter, r *http.Request) (err error) {
-	posts, err := retrievePosts(r.URL.Query())
+func handleGetPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
+	posts, err := retrievePosts(db, r.URL.Query())
 	if err != nil {
 		return err
 	}
@@ -262,8 +272,8 @@ func handleGetPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleGetPost(w http.ResponseWriter, r *http.Request, slug string) (err error) {
-	post, err := retrievePost(slug)
+func handleGetPost(w http.ResponseWriter, r *http.Request, db *sql.DB, slug string) (err error) {
+	post, err := retrievePost(db, slug)
 	if err != nil {
 		return
 	}
@@ -276,13 +286,13 @@ func handleGetPost(w http.ResponseWriter, r *http.Request, slug string) (err err
 	return
 }
 
-func handlePostPost(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePostPost(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
 	post := Post{}
 	json.Unmarshal(body, &post)
-	err = post.create()
+	err = post.create(db)
 	if err != nil {
 		return
 	}
@@ -290,12 +300,12 @@ func handlePostPost(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handlePutPost(w http.ResponseWriter, r *http.Request) (err error) {
+func handlePutPost(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	post, err := retrievePost(slug)
+	post, err := retrievePost(db, slug)
 	if err != nil {
 		return
 	}
@@ -303,7 +313,7 @@ func handlePutPost(w http.ResponseWriter, r *http.Request) (err error) {
 	body := make([]byte, len)
 	r.Body.Read(body)
 	json.Unmarshal(body, &post)
-	err = post.update()
+	err = post.update(db)
 	if err != nil {
 		return
 	}
@@ -311,16 +321,16 @@ func handlePutPost(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func handleDeletePost(w http.ResponseWriter, r *http.Request) (err error) {
+func handleDeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) (err error) {
 	slug := path.Base(r.URL.Path)
 	if err != nil {
 		return
 	}
-	post, err := retrievePost(slug)
+	post, err := retrievePost(db, slug)
 	if err != nil {
 		return
 	}
-	err = post.delete()
+	err = post.delete(db)
 	if err != nil {
 		return
 	}
