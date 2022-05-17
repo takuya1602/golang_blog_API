@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
@@ -225,5 +226,181 @@ func TestRetrieveSubCategory(t *testing.T) {
 
 	if !(reflect.DeepEqual(subCategory, expectedSubCategory)) {
 		t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedSubCategory, subCategory)
+	}
+}
+
+func TestRetrievePosts(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	expectedPosts1 := []Post{
+		{
+			Id:              1,
+			CategoryId:      1,
+			SubCategoryId:   1,
+			Title:           "testPost1",
+			Slug:            "test-post-1",
+			EyeCatchingImg:  "test_post_1.png",
+			Content:         "This is 1st post",
+			MetaDescription: "This is 1st post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+	}
+
+	expectedPosts2 := []Post{
+		{
+			Id:              2,
+			CategoryId:      1,
+			SubCategoryId:   2,
+			Title:           "testPost2",
+			Slug:            "test-post-2",
+			EyeCatchingImg:  "test_post_2.png",
+			Content:         "This is 2nd post",
+			MetaDescription: "This is 2nd post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+	}
+
+	var expectedPosts []Post
+	expectedPosts = append(expectedPosts, expectedPosts1...)
+	expectedPosts = append(expectedPosts, expectedPosts2...)
+
+	t.Run(
+		"without query params",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", "false", postCreatedAt, postUpdatedAt).
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", "false", postCreatedAt, postUpdatedAt)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select * from posts")).
+				WillReturnRows(rows)
+
+			var queryParams map[string][]string
+			posts, err := retrievePosts(db, queryParams)
+
+			if !(reflect.DeepEqual(posts, expectedPosts)) {
+				t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPosts, posts)
+			}
+		},
+	)
+	t.Run(
+		"with query params: category-name",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			categoryId := sqlmock.NewRows([]string{"id"}).
+				AddRow(1)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select id from categories where slug = $1")).
+				WithArgs("test-category-1").
+				WillReturnRows(categoryId)
+
+			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", "false", postCreatedAt, postUpdatedAt).
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", "false", postCreatedAt, postUpdatedAt)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select * from posts where category_id = $1")).
+				WithArgs(1).
+				WillReturnRows(rows)
+
+			queryParams := map[string][]string{
+				"category-name": {"test-category-1"},
+			}
+
+			posts, err := retrievePosts(db, queryParams)
+			if err != nil {
+				panic(err)
+			}
+
+			if !(reflect.DeepEqual(posts, expectedPosts)) {
+				t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPosts, posts)
+			}
+		},
+	)
+	t.Run(
+		"with query params: sub-category-name",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			subCategoryId := sqlmock.NewRows([]string{"id"}).
+				AddRow(2)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select id from sub_categories where slug = $1")).
+				WithArgs("test-sub-category-2").
+				WillReturnRows(subCategoryId)
+
+			row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", "false", postCreatedAt, postUpdatedAt)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select * from posts where sub_category_id = $1")).
+				WithArgs(2).
+				WillReturnRows(row)
+
+			queryParams := map[string][]string{
+				"sub-category-name": {"test-sub-category-2"},
+			}
+			posts, err := retrievePosts(db, queryParams)
+
+			if !(reflect.DeepEqual(posts, expectedPosts2)) {
+				t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPosts2, posts)
+			}
+		},
+	)
+}
+
+func TestRetrievePost(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+		AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", "false", postCreatedAt, postUpdatedAt)
+
+	mock.ExpectQuery(regexp.QuoteMeta("select * from posts where slug = $1")).
+		WithArgs("test-post-1").
+		WillReturnRows(row)
+
+	post, err := retrievePost(db, "test-post-1")
+	if err != nil {
+		panic(err)
+	}
+
+	expectedPost := Post{
+		Id:              1,
+		CategoryId:      1,
+		SubCategoryId:   1,
+		Title:           "testPost1",
+		Slug:            "test-post-1",
+		EyeCatchingImg:  "test_post_1.png",
+		Content:         "This is 1st post",
+		MetaDescription: "This is 1st post",
+		IsPublic:        false,
+		CreatedAt:       postCreatedAt,
+		UpdatedAt:       postUpdatedAt,
+	}
+
+	if !(reflect.DeepEqual(post, expectedPost)) {
+		t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPost, post)
 	}
 }
