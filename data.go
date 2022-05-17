@@ -21,7 +21,7 @@ func retrieveCategories(db *sql.DB) (categories []Category, err error) {
 
 func retrieveCategory(db *sql.DB, slug string) (category Category, err error) {
 	category = Category{}
-	err = db.QueryRow("select id, category_name, slug from parent_categories where slug = $1", slug).Scan(&category.Id, &category.CategoryName, &category.Slug)
+	err = db.QueryRow("select * from categories where slug = $1", slug).Scan(&category.Id, &category.CategoryName, &category.Slug)
 	return
 }
 

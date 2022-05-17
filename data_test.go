@@ -40,6 +40,36 @@ func TestRetrieveCategories(t *testing.T) {
 	}
 
 	if !(reflect.DeepEqual(categories, expectedCategory)) {
-		t.Fatalf("Wrong content, was expecting %v, but got %v", expectedCategory, categories)
+		t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedCategory, categories)
+	}
+}
+
+func TestRetrieveCategory(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"id", "category_name", "slug"}).
+		AddRow(1, "testCategory1", "test-category-1")
+
+	mock.ExpectQuery(regexp.QuoteMeta("select * from categories where slug = $1")).
+		WithArgs("test-category-1").
+		WillReturnRows(rows)
+
+	category, err := retrieveCategory(db, "test-category-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedCategory := Category{
+		Id:           1,
+		CategoryName: "testCategory1",
+		Slug:         "test-category-1",
+	}
+
+	if !(reflect.DeepEqual(category, expectedCategory)) {
+		t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedCategory, category)
 	}
 }
