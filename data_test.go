@@ -404,3 +404,68 @@ func TestRetrievePost(t *testing.T) {
 		t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPost, post)
 	}
 }
+
+func TestCategoryCreate(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectQuery(regexp.QuoteMeta("insert into categories (category_name, slug) values ($1, $2) returning id")).
+		WithArgs("testCategory1", "test-category-1").
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+	category := Category{
+		CategoryName: "testCategory1",
+		Slug:         "test-category-1",
+	}
+
+	if err := category.create(db); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCategoryUpdate(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec(regexp.QuoteMeta("update categories set category_name = $2, slug = $3 where id = $1")).
+		WithArgs(1, "testCategory2", "test-category-2").
+		WillReturnResult(sqlmock.NewResult(1, 2))
+
+	category := Category{
+		Id:           1,
+		CategoryName: "testCategory2",
+		Slug:         "test-category-2",
+	}
+
+	if err := category.update(db); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCategoryDelete(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec(regexp.QuoteMeta("delete from categories where id = $1")).
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(1, 3))
+
+	category := Category{
+		Id:           1,
+		CategoryName: "testCategory2",
+		Slug:         "test-category-2",
+	}
+
+	if err := category.delete(db); err != nil {
+		t.Fatal(err)
+	}
+}
