@@ -54,7 +54,7 @@ func retrieveSubCategories(db *sql.DB, queryParams map[string][]string) (subCate
 
 func retrieveSubCategory(db *sql.DB, slug string) (subCategory SubCategory, err error) {
 	subCategory = SubCategory{}
-	err = db.QueryRow("select id, category_name, slug, parent_category_id from categories where slug = $1", slug).Scan(&subCategory.Id, &subCategory.CategoryName, &subCategory.Slug, &subCategory.ParentCategoryId)
+	err = db.QueryRow("select * from sub_categories where slug = $1", slug).Scan(&subCategory.Id, &subCategory.CategoryName, &subCategory.Slug, &subCategory.ParentCategoryId)
 	if err != nil {
 		return
 	}
