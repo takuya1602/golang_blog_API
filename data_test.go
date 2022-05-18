@@ -469,3 +469,80 @@ func TestCategoryDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSubCategoryMethod(t *testing.T) {
+	t.Run(
+		"create",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			mock.ExpectQuery(regexp.QuoteMeta("insert into sub_categories (category_name, slug, parent_category_id) values ($1, $2, $3) returning id")).
+				WithArgs("testSubCategory1", "test-sub-category-1", 1).
+				WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+			subCategory := SubCategory{
+				CategoryName:     "testSubCategory1",
+				Slug:             "test-sub-category-1",
+				ParentCategoryId: 1,
+			}
+
+			if err := subCategory.create(db); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+	t.Run(
+		"update",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			mock.ExpectExec(regexp.QuoteMeta("update sub_categories set category_name = $2, slug = $3, parent_category_id = $4 where id = $1")).
+				WithArgs(1, "testSubCategory1", "test-sub-category-1", 1).
+				WillReturnResult(sqlmock.NewResult(1, 3))
+
+			subCategory := SubCategory{
+				Id:               1,
+				CategoryName:     "testSubCategory1",
+				Slug:             "test-sub-category-1",
+				ParentCategoryId: 1,
+			}
+
+			if err := subCategory.update(db); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+	t.Run(
+		"delete",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			mock.ExpectExec(regexp.QuoteMeta("delete from sub_categories where id = $1")).
+				WithArgs(1).
+				WillReturnResult(sqlmock.NewResult(1, 4))
+
+			subCategory := SubCategory{
+				Id:               1,
+				CategoryName:     "testSubCategory1",
+				Slug:             "test-sub-category-1",
+				ParentCategoryId: 1,
+			}
+
+			if err := subCategory.delete(db); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+}
