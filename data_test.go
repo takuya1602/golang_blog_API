@@ -278,8 +278,8 @@ func TestRetrievePosts(t *testing.T) {
 			defer db.Close()
 
 			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
-				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", "false", postCreatedAt, postUpdatedAt).
-				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", "false", postCreatedAt, postUpdatedAt)
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt).
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false, postCreatedAt, postUpdatedAt)
 
 			mock.ExpectQuery(regexp.QuoteMeta("select * from posts")).
 				WillReturnRows(rows)
@@ -309,8 +309,8 @@ func TestRetrievePosts(t *testing.T) {
 				WillReturnRows(categoryId)
 
 			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
-				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", "false", postCreatedAt, postUpdatedAt).
-				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", "false", postCreatedAt, postUpdatedAt)
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt).
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false, postCreatedAt, postUpdatedAt)
 
 			mock.ExpectQuery(regexp.QuoteMeta("select * from posts where category_id = $1")).
 				WithArgs(1).
@@ -347,7 +347,7 @@ func TestRetrievePosts(t *testing.T) {
 				WillReturnRows(subCategoryId)
 
 			row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
-				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", "false", postCreatedAt, postUpdatedAt)
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false, postCreatedAt, postUpdatedAt)
 
 			mock.ExpectQuery(regexp.QuoteMeta("select * from posts where sub_category_id = $1")).
 				WithArgs(2).
@@ -375,7 +375,7 @@ func TestRetrievePost(t *testing.T) {
 	defer db.Close()
 
 	row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
-		AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", "false", postCreatedAt, postUpdatedAt)
+		AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt)
 
 	mock.ExpectQuery(regexp.QuoteMeta("select * from posts where slug = $1")).
 		WithArgs("test-post-1").
@@ -541,6 +541,107 @@ func TestSubCategoryMethod(t *testing.T) {
 			}
 
 			if err := subCategory.delete(db); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+}
+
+func TestPost(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+
+	t.Run(
+		"create",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			mock.ExpectQuery(regexp.QuoteMeta("insert into posts (category_id, sub_category_id, title, slug, eye_catching_img, content, meta_description, is_public) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id, created_at, updated_at")).
+				WithArgs(1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, postCreatedAt, postUpdatedAt))
+
+			post := Post{
+				CategoryId:      1,
+				SubCategoryId:   1,
+				Title:           "testPost1",
+				Slug:            "test-post-1",
+				EyeCatchingImg:  "test_post_1.png",
+				Content:         "This is 1st post",
+				MetaDescription: "This is 1st post",
+				IsPublic:        false,
+				CreatedAt:       postCreatedAt,
+				UpdatedAt:       postUpdatedAt,
+			}
+
+			if err := post.create(db); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+	t.Run(
+		"update",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			mock.ExpectExec(regexp.QuoteMeta("update posts set category_id = $2, sub_category_id = $3, title = $4, slug = $5, eye_catching_img = $6, content = $7, meta_description = $8, is_public = $9 where id = $1")).
+				WithArgs(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false).
+				WillReturnResult(sqlmock.NewResult(1, 10))
+
+			post := Post{
+				Id:              1,
+				CategoryId:      1,
+				SubCategoryId:   1,
+				Title:           "testPost1",
+				Slug:            "test-post-1",
+				EyeCatchingImg:  "test_post_1.png",
+				Content:         "This is 1st post",
+				MetaDescription: "This is 1st post",
+				IsPublic:        false,
+				CreatedAt:       postCreatedAt,
+				UpdatedAt:       postUpdatedAt,
+			}
+
+			if err := post.update(db); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+	t.Run(
+		"delete",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			mock.ExpectExec(regexp.QuoteMeta("delete from posts where id = $1")).
+				WithArgs(1).
+				WillReturnResult(sqlmock.NewResult(1, 9))
+
+			post := Post{
+				Id:              1,
+				CategoryId:      1,
+				SubCategoryId:   1,
+				Title:           "testPost1",
+				Slug:            "test-post-1",
+				EyeCatchingImg:  "test_post_1.png",
+				Content:         "This is 1st post",
+				MetaDescription: "This is 1st post",
+				IsPublic:        false,
+				CreatedAt:       postCreatedAt,
+				UpdatedAt:       postUpdatedAt,
+			}
+
+			if err := post.delete(db); err != nil {
 				t.Fatal(err)
 			}
 		},
