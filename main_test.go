@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
@@ -374,6 +375,394 @@ func TestHandleDeleteSubCategory(t *testing.T) {
 	writer := httptest.NewRecorder()
 
 	request, err := http.NewRequest("DELETE", "/sub-categories/test-sub-category-1", nil)
+	mux.ServeHTTP(writer, request)
+
+	if writer.Code != 200 {
+		t.Fatalf("Response code is %v\n", writer.Code)
+	}
+}
+
+func TestHandleGetPosts(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	t.Run(
+		"without query params",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			e := Env{Db: db}
+
+			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt).
+				AddRow(2, 2, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false, postCreatedAt, postUpdatedAt)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select * from posts")).
+				WillReturnRows(rows)
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+			writer := httptest.NewRecorder()
+
+			request, err := http.NewRequest("GET", "/posts/", nil)
+			mux.ServeHTTP(writer, request)
+
+			if writer.Code != 200 {
+				t.Fatalf("Response code is %v\n", writer.Code)
+			}
+
+			expectedPosts := []Post{
+				{
+					Id:              1,
+					CategoryId:      1,
+					SubCategoryId:   1,
+					Title:           "testPost1",
+					Slug:            "test-post-1",
+					EyeCatchingImg:  "test_post_1.png",
+					Content:         "This is 1st post",
+					MetaDescription: "This is 1st post",
+					IsPublic:        false,
+					CreatedAt:       postCreatedAt,
+					UpdatedAt:       postUpdatedAt,
+				},
+				{
+					Id:              2,
+					CategoryId:      2,
+					SubCategoryId:   2,
+					Title:           "testPost2",
+					Slug:            "test-post-2",
+					EyeCatchingImg:  "test_post_2.png",
+					Content:         "This is 2nd post",
+					MetaDescription: "This is 2nd post",
+					IsPublic:        false,
+					CreatedAt:       postCreatedAt,
+					UpdatedAt:       postUpdatedAt,
+				},
+			}
+			posts := []Post{}
+			json.Unmarshal(writer.Body.Bytes(), &posts)
+
+			if !(reflect.DeepEqual(posts, expectedPosts)) {
+				t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPosts, posts)
+			}
+		},
+	)
+	t.Run(
+		"with query params: category-name",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			e := Env{Db: db}
+
+			mock.ExpectQuery(regexp.QuoteMeta("select id from categories where slug = $1")).
+				WithArgs("test-category-1").
+				WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt).
+				AddRow(2, 1, 2, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false, postCreatedAt, postUpdatedAt)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select * from posts where category_id = $1")).
+				WithArgs(1).
+				WillReturnRows(rows)
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+			writer := httptest.NewRecorder()
+
+			request, err := http.NewRequest("GET", "/posts/?category-name=test-category-1", nil)
+			mux.ServeHTTP(writer, request)
+
+			if writer.Code != 200 {
+				t.Fatalf("Response code is %v\n", writer.Code)
+			}
+
+			expectedPosts := []Post{
+				{
+					Id:              1,
+					CategoryId:      1,
+					SubCategoryId:   1,
+					Title:           "testPost1",
+					Slug:            "test-post-1",
+					EyeCatchingImg:  "test_post_1.png",
+					Content:         "This is 1st post",
+					MetaDescription: "This is 1st post",
+					IsPublic:        false,
+					CreatedAt:       postCreatedAt,
+					UpdatedAt:       postUpdatedAt,
+				},
+				{
+					Id:              2,
+					CategoryId:      1,
+					SubCategoryId:   2,
+					Title:           "testPost2",
+					Slug:            "test-post-2",
+					EyeCatchingImg:  "test_post_2.png",
+					Content:         "This is 2nd post",
+					MetaDescription: "This is 2nd post",
+					IsPublic:        false,
+					CreatedAt:       postCreatedAt,
+					UpdatedAt:       postUpdatedAt,
+				},
+			}
+
+			posts := []Post{}
+			json.Unmarshal(writer.Body.Bytes(), &posts)
+
+			if !(reflect.DeepEqual(posts, expectedPosts)) {
+				t.Fatalf("Wrong content. was expecting %v, but got %v\n", expectedPosts, posts)
+			}
+		},
+	)
+	t.Run(
+		"with query params: sub-category-name",
+		func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
+			defer db.Close()
+
+			e := Env{Db: db}
+
+			mock.ExpectQuery(regexp.QuoteMeta("select id from sub_categories where slug = $1")).
+				WithArgs("test-sub-category-1").
+				WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+			rows := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+				AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt).
+				AddRow(2, 1, 1, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false, postCreatedAt, postUpdatedAt)
+
+			mock.ExpectQuery(regexp.QuoteMeta("select * from posts where sub_category_id = $1")).
+				WithArgs(1).
+				WillReturnRows(rows)
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+			writer := httptest.NewRecorder()
+
+			request, err := http.NewRequest("GET", "/posts/?sub-category-name=test-sub-category-1", nil)
+			mux.ServeHTTP(writer, request)
+
+			if writer.Code != 200 {
+				t.Fatalf("Response code is %v\n", writer.Code)
+			}
+
+			expectedPosts := []Post{
+				{
+					Id:              1,
+					CategoryId:      1,
+					SubCategoryId:   1,
+					Title:           "testPost1",
+					Slug:            "test-post-1",
+					EyeCatchingImg:  "test_post_1.png",
+					Content:         "This is 1st post",
+					MetaDescription: "This is 1st post",
+					IsPublic:        false,
+					CreatedAt:       postCreatedAt,
+					UpdatedAt:       postUpdatedAt,
+				},
+				{
+					Id:              2,
+					CategoryId:      1,
+					SubCategoryId:   1,
+					Title:           "testPost2",
+					Slug:            "test-post-2",
+					EyeCatchingImg:  "test_post_2.png",
+					Content:         "This is 2nd post",
+					MetaDescription: "This is 2nd post",
+					IsPublic:        false,
+					CreatedAt:       postCreatedAt,
+					UpdatedAt:       postUpdatedAt,
+				},
+			}
+
+			posts := []Post{}
+			json.Unmarshal(writer.Body.Bytes(), &posts)
+
+			if !(reflect.DeepEqual(posts, expectedPosts)) {
+				t.Fatalf("Wrong content. was expecting %v, but got %v\n", expectedPosts, posts)
+			}
+		},
+	)
+}
+
+func TestHandleGetPost(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	e := Env{Db: db}
+
+	row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+		AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt)
+
+	mock.ExpectQuery(regexp.QuoteMeta("select * from posts where slug = $1")).
+		WithArgs("test-post-1").
+		WillReturnRows(row)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+	writer := httptest.NewRecorder()
+
+	request, err := http.NewRequest("GET", "/posts/test-post-1/", nil)
+	mux.ServeHTTP(writer, request)
+
+	if writer.Code != 200 {
+		t.Fatalf("Response code is %v\n", writer.Code)
+	}
+
+	post := Post{}
+	json.Unmarshal(writer.Body.Bytes(), &post)
+
+	expectedPost := Post{
+		Id:              1,
+		CategoryId:      1,
+		SubCategoryId:   1,
+		Title:           "testPost1",
+		Slug:            "test-post-1",
+		EyeCatchingImg:  "test_post_1.png",
+		Content:         "This is 1st post",
+		MetaDescription: "This is 1st post",
+		IsPublic:        false,
+		CreatedAt:       postCreatedAt,
+		UpdatedAt:       postUpdatedAt,
+	}
+
+	if !(reflect.DeepEqual(post, expectedPost)) {
+		t.Fatalf("Wrong content, was expecting %v, but got %v\n", expectedPost, post)
+	}
+}
+
+func TestHandlePostPost(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	e := Env{Db: db}
+
+	mock.ExpectQuery(regexp.QuoteMeta("insert into posts (category_id, sub_category_id, title, slug, eye_catching_img, content, meta_description, is_public) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id, created_at, updated_at")).
+		WithArgs(1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, postCreatedAt, postUpdatedAt))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+	writer := httptest.NewRecorder()
+
+	json := strings.NewReader(`{
+		"category_id": 1,
+		"sub_category_id": 1,
+		"title": "testPost1",
+		"slug": "test-post-1",
+		"eye_catching_img": "test_post_1.png",
+		"content": "This is 1st post",
+		"meta_description": "This is 1st post",
+		"is_public": "false"
+	}`)
+
+	request, err := http.NewRequest("POST", "/posts/", json)
+	mux.ServeHTTP(writer, request)
+
+	if writer.Code != 200 {
+		t.Fatalf("Response code is %v\n", writer.Code)
+	}
+}
+
+func TestHandlePutPost(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	e := Env{Db: db}
+
+	row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+		AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt)
+
+	mock.ExpectQuery(regexp.QuoteMeta("select * from posts where slug = $1")).
+		WithArgs("test-post-1").
+		WillReturnRows(row)
+
+	mock.ExpectExec(regexp.QuoteMeta("update posts set category_id = $2, sub_category_id = $3, title = $4, slug = $5, eye_catching_img = $6, content = $7, meta_description = $8, is_public = $9 where id = $1")).
+		WithArgs(1, 1, 1, "testPost2", "test-post-2", "test_post_2.png", "This is 2nd post", "This is 2nd post", false).
+		WillReturnResult(sqlmock.NewResult(1, 8))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+	writer := httptest.NewRecorder()
+
+	json := strings.NewReader(`{
+		"category_id": 1,
+		"sub_category_id": 1,
+		"title": "testPost2",
+		"slug": "test-post-2",
+		"eye_catching_img": "test_post_2.png",
+		"content": "This is 2nd post",
+		"meta_description": "This is 2nd post",
+		"is_public": "false"
+	}`)
+
+	request, err := http.NewRequest("PUT", "/posts/test-post-1/", json)
+	mux.ServeHTTP(writer, request)
+
+	if writer.Code != 200 {
+		t.Fatalf("Response code is %v\n", writer.Code)
+	}
+}
+
+func TestHandleDeletePost(t *testing.T) {
+	postCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	postUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999-07")
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	e := Env{Db: db}
+
+	row := sqlmock.NewRows([]string{"id", "category_id", "sub_category_id", "title", "slug", "eye_catching_img", "content", "meta_description", "is_public", "created_at", "updated_at"}).
+		AddRow(1, 1, 1, "testPost1", "test-post-1", "test_post_1.png", "This is 1st post", "This is 1st post", false, postCreatedAt, postUpdatedAt)
+
+	mock.ExpectQuery(regexp.QuoteMeta("select * from posts where slug = $1")).
+		WithArgs("test-post-1").
+		WillReturnRows(row)
+
+	mock.ExpectExec(regexp.QuoteMeta("delete from posts where id = $1")).
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(1, 11))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/posts/", e.handleRequestPosts)
+
+	writer := httptest.NewRecorder()
+
+	request, err := http.NewRequest("DELETE", "/posts/test-post-1/", nil)
 	mux.ServeHTTP(writer, request)
 
 	if writer.Code != 200 {
