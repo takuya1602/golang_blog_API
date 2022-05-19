@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path"
 	"time"
@@ -53,6 +54,7 @@ func main() {
 	http.HandleFunc("/categories/", e.handleRequestCategory)
 	http.HandleFunc("/sub-categories/", e.handleRequestSubCategory)
 	http.HandleFunc("/posts/", e.handleRequestPosts)
+	http.HandleFunc("/admin/", e.handleRequestAdmin)
 	http.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir("media"))))
 
 	server.ListenAndServe()
@@ -60,6 +62,10 @@ func main() {
 
 func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	var err error
+	authToken := r.Header.Get("Authorization")
+	fmt.Printf("authToken: %s\n", authToken)
+	isAdmin := validateToken(authToken)
+	fmt.Printf("isAdmin: %v\n", isAdmin)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -67,7 +73,11 @@ func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		err = handleGetCategory(w, r, e.Db)
 	case "POST":
-		err = handlePostCategory(w, r, e.Db)
+		if isAdmin {
+			err = handlePostCategory(w, r, e.Db)
+		} else {
+			http.Error(w, "You don't have permission", http.StatusUnauthorized)
+		}
 	case "PUT":
 		err = handlePutCategory(w, r, e.Db)
 	case "DELETE":
