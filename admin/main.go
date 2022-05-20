@@ -31,5 +31,8 @@ func main() {
 			fmt.Println(err)
 			return
 		}
+	} else {
+		fmt.Printf("you should select method\ncreateUser, changeUsername, changepassword, deleteuser\n")
+		return
 	}
 }
