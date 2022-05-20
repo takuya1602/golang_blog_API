@@ -100,7 +100,6 @@ func retrievePosts(db *sql.DB, queryParams map[string][]string) (posts []Post, e
 }
 
 func retrievePost(db *sql.DB, slug string) (post Post, err error) {
-	post = Post{}
 	err = db.QueryRow("select * from posts where slug = $1", slug).Scan(&post.Id, &post.CategoryId, &post.SubCategoryId, &post.Title, &post.Slug, &post.EyeCatchingImg, &post.Content, &post.MetaDescription, &post.IsPublic, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
 		return
