@@ -26,6 +26,10 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
+type ReturnToken struct {
+	Token string `json:"token"`
+}
+
 func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 	db := e.Db
 	len := r.ContentLength
@@ -64,11 +68,21 @@ func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, _ := token.SignedString([]byte(secret))
 
+	returnToken := ReturnToken{
+		Token: tokenString,
+	}
+
+	output, err := json.MarshalIndent(&returnToken, "", "\t")
+	if err != nil {
+		return
+	}
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(tokenString))
+	w.Write(output)
+	w.WriteHeader(200)
 	return
 }
 
