@@ -33,6 +33,13 @@ create table posts (
     updated_at timestamp with time zone default current_timestamp not null
 );
 
+create table users (
+    id serial primary key,
+    username varchar(255),
+    password varchar(255)
+    is_admin boolean
+);
+
 create trigger update_posts_timestamp before update on posts for each row execute procedure update_timestamp();
 
 insert into categories 

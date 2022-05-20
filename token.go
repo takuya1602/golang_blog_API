@@ -38,6 +38,8 @@ func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 
 	// Warning: anyone can get token with any email and password
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(creds.Password), 10)
+	fmt.Println("hashed password", string(hashedPassword))
+	fmt.Printf("type: %T\n", string(hashedPassword))
 
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(creds.Password))
 	if err != nil {
