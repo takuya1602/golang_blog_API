@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,47 +10,45 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
 	Id       int
-	Email    string
+	Username string
 	Password string
+	IsAdmin  bool
 }
 
 type Credentials struct {
-	Username string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-var validUser = User{
-	Id:       10,
-	Email:    "test@example.com",
-	Password: "$2a$12$TBZJBBs0TfWdXHeujpGBn.TTwJq5V7Ra4yu.w9VV/Xgp9R3XS2YCq",
-}
-
 func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
+	db := e.Db
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
 	var creds Credentials
 	json.Unmarshal(body, &creds)
 
-	// Warning: anyone can get token with any email and password
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(creds.Password), 10)
-	fmt.Println("hashed password", string(hashedPassword))
-	fmt.Printf("type: %T\n", string(hashedPassword))
+	var user User
+	err := db.QueryRow("select * from users where username = $1", creds.Username).
+		Scan(&user.Id, &user.Username, &user.Password, &user.IsAdmin)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(creds.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	claims := jwt.MapClaims{
-		"admin":   true,
-		"user_id": validUser.Id,
+		"user_id": user.Id,
 		"iat":     time.Now().Unix(),
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
@@ -65,8 +64,6 @@ func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, _ := token.SignedString([]byte(secret))
 
-	fmt.Printf("jwt-token: %s\n", tokenString)
-
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -75,7 +72,7 @@ func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func validateToken(authToken string) (isAdmin bool) {
+func validateToken(db *sql.DB, authToken string) (isAdmin bool) {
 	err := godotenv.Load(fmt.Sprint(".env", os.Getenv("GO_ENV")))
 	if err != nil {
 		panic(err)
@@ -96,7 +93,11 @@ func validateToken(authToken string) (isAdmin bool) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		isAdmin = claims["admin"].(bool)
+		userId := int64(claims["user_id"].(float64))
+		err := db.QueryRow("select is_admin from users where id = $1", userId).Scan(&isAdmin)
+		if err != nil {
+			fmt.Println(err)
+		}
 	} else {
 		fmt.Println(err)
 	}

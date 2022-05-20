@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"path"
 	"time"
@@ -63,9 +62,7 @@ func main() {
 func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	var err error
 	authToken := r.Header.Get("Authorization")
-	fmt.Printf("authToken: %s\n", authToken)
-	isAdmin := validateToken(authToken)
-	fmt.Printf("isAdmin: %v\n", isAdmin)
+	isAdmin := validateToken(e.Db, authToken)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
