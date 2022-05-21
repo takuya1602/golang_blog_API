@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -47,8 +46,4 @@ func TestHandleRequestAdmin(t *testing.T) {
 	if writer.Code != 200 {
 		t.Fatalf("Response code is %v\n", writer.Code)
 	}
-
-	// delete later
-	returnToken := ReturnToken{}
-	json.Unmarshal(writer.Body.Bytes(), &returnToken)
 }
