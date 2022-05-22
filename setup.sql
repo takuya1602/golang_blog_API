@@ -8,13 +8,13 @@ $$ language 'plpgsql';
 
 create table categories (
     id serial primary key,
-    category_name varchar(255) unique,
+    name varchar(255) unique,
     slug varchar(255) unique
 );
 
 create table sub_categories (
     id serial primary key,
-    category_name varchar(255) unique,
+    name varchar(255) unique,
     slug varchar(255) unique,
     parent_category_id integer references categories(id)
 );
@@ -43,14 +43,14 @@ create table users (
 create trigger update_posts_timestamp before update on posts for each row execute procedure update_timestamp();
 
 insert into categories 
-    (category_name, slug)
+    (name, slug)
 values 
     ('プログラミング', 'programming'),
     ('データベース', 'database'),
     ('機械学習', 'machine-learning');
 
 insert into sub_categories
-    (category_name, slug, parent_category_id)
+    (name, slug, parent_category_id)
 values
     ('Go言語', 'golang', 1),
     ('Python', 'python', 1),
