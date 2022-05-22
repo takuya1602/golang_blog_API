@@ -25,6 +25,7 @@ func main() {
 
 	http.HandleFunc("/categories/", e.handleRequestCategory)
 	http.HandleFunc("/sub-categories/", e.handleRequestSubCategory)
+	http.HandleFunc("/posts/", e.handleRequestPost)
 
 	server.ListenAndServe()
 }
@@ -66,6 +67,28 @@ func (e *Env) handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
 		err = subCategory.Update(w, r)
 	case "DELETE":
 		err = subCategory.Delete(w, r)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (e *Env) handleRequestPost(w http.ResponseWriter, r *http.Request) {
+	var err error
+	post := di.InitPost(e.Db)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	switch r.Method {
+	case "GET":
+		err = post.GetAll(w, r)
+	case "POST":
+		err = post.Create(w, r)
+	case "PUT":
+		err = post.Update(w, r)
+	case "DELETE":
+		err = post.Delete(w, r)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

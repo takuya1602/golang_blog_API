@@ -19,3 +19,9 @@ func InitSubCategory(db *sql.DB) handler.ISubCategoryHandler {
 	s := service.NewSubCategoryService(r)
 	return handler.NewSubCategoryHandler(s)
 }
+
+func InitPost(db *sql.DB) handler.IPostHandler {
+	r := repository.NewPostRepository(db)
+	s := service.NewPostService(r)
+	return handler.NewPostHandler(s)
+}

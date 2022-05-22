@@ -36,7 +36,7 @@ create table posts (
 create table users (
     id serial primary key,
     username varchar(255),
-    password varchar(255)
+    password varchar(255),
     is_admin boolean
 );
 
@@ -64,3 +64,4 @@ insert into posts
 values
     (1, 1, 'Go入門', 'introduction-of-go', 'test.jpeg', 'Go言語は近年注目されているWebアプリケーションの構築のための言語です。', 'Go言語入門', 'false'),
     (1, 2, 'Python入門', 'introduction-of-python', 'test.jpeg', 'Pythonは機械学習分野でよく用いられているインタプリタ言語です。', 'Python入門', 'false');
+

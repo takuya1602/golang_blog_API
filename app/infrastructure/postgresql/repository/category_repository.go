@@ -30,33 +30,21 @@ func (r *CategoryRepository) GetAll() (categories []entity.Category, err error) 
 
 func (r *CategoryRepository) Create(category entity.Category) (err error) {
 	_, err = r.Exec("insert into categories (name, slug) values ($1, $2)", category.Name, category.Slug)
-	if err != nil {
-		return
-	}
 	return
 }
 
 func (r *CategoryRepository) Update(category entity.Category) (err error) {
 	_, err = r.Exec("update categories set name = $2, slug = $3 where id = $1", category.Id, category.Name, category.Slug)
-	if err != nil {
-		return
-	}
 	return
 }
 
 func (r *CategoryRepository) Delete(category entity.Category) (err error) {
 	_, err = r.Exec("delete from categories where id = $1", category.Id)
-	if err != nil {
-		return
-	}
 	return
 }
 
 func (r *CategoryRepository) GetBySlug(slug string) (category entity.Category, err error) {
 	err = r.QueryRow("select id, name, slug from categories where slug = $1", slug).
 		Scan(&category.Id, &category.Name, &category.Slug)
-	if err != nil {
-		return
-	}
 	return
 }
