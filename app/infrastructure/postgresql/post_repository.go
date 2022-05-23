@@ -29,6 +29,42 @@ func (r *PostRepository) GetAll() (posts []entity.Post, err error) {
 	return
 }
 
+func (r *PostRepository) GetFilterCategory(categoryName string) (posts []entity.Post, err error) {
+	var categoryId int
+	err = r.QueryRow("select id from categories where slug = $1", categoryName).Scan(&categoryId)
+	if err != nil {
+		return
+	}
+	rows, err := r.Query("select * from posts where category_id = $1", categoryId)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var post entity.Post
+		rows.Scan(&post.Id, &post.CategoryId, &post.SubCategoryId, &post.Title, &post.Slug, &post.EyeCatchingImg, &post.Content, &post.MetaDescription, &post.IsPublic, &post.CreatedAt, &post.UpdatedAt)
+		posts = append(posts, post)
+	}
+	return
+}
+
+func (r *PostRepository) GetFilterSubCategory(subCategoryName string) (posts []entity.Post, err error) {
+	var subCategoryId int
+	err = r.QueryRow("select id from sub_categories where slug = $1", subCategoryName).Scan(&subCategoryId)
+	if err != nil {
+		return
+	}
+	rows, err := r.Query("select * from posts where sub_category_id = $1", subCategoryId)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var post entity.Post
+		rows.Scan(&post.Id, &post.CategoryId, &post.SubCategoryId, &post.Title, &post.Slug, &post.EyeCatchingImg, &post.Content, &post.MetaDescription, &post.IsPublic, &post.CreatedAt, &post.UpdatedAt)
+		posts = append(posts, post)
+	}
+	return
+}
+
 func (r *PostRepository) GetBySlug(slug string) (post entity.Post, err error) {
 	err = r.QueryRow("select * from posts where slug = $1", slug).
 		Scan(&post.Id, &post.CategoryId, &post.SubCategoryId, &post.Title, &post.Slug, &post.EyeCatchingImg, &post.Content, &post.MetaDescription, &post.IsPublic, &post.CreatedAt, &post.UpdatedAt)

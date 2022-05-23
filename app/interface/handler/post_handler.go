@@ -9,7 +9,7 @@ import (
 )
 
 type IPostHandler interface {
-	GetAll(w http.ResponseWriter, r *http.Request) (err error)
+	Get(w http.ResponseWriter, r *http.Request) (err error)
 	Create(w http.ResponseWriter, r *http.Request) (err error)
 	Update(w http.ResponseWriter, r *http.Request) (err error)
 	Delete(w http.ResponseWriter, r *http.Request) (err error)
@@ -24,10 +24,26 @@ func NewPostHandler(srv service.IPostService) (iPostHandler IPostHandler) {
 	return
 }
 
-func (h *PostHandler) GetAll(w http.ResponseWriter, r *http.Request) (err error) {
-	postDtos, err := h.IPostService.GetAll()
-	if err != nil {
-		return
+func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) (err error) {
+	var postDtos []dto.PostModel
+	queryParams := r.URL.Query()
+	if categorySlugs, ok := queryParams["category-name"]; ok {
+		categorySlug := categorySlugs[0]
+		postDtos, err = h.IPostService.GetWithCategoryQuery(categorySlug)
+		if err != nil {
+			return
+		}
+	} else if subCategorySlugs, ok := queryParams["sub-category-name"]; ok {
+		subCategorySlug := subCategorySlugs[0]
+		postDtos, err = h.IPostService.GetWithSubCategoryQuery(subCategorySlug)
+		if err != nil {
+			return
+		}
+	} else {
+		postDtos, err = h.IPostService.GetAll()
+		if err != nil {
+			return
+		}
 	}
 	output, err := json.MarshalIndent(&postDtos, "", "\t")
 	if err != nil {

@@ -144,7 +144,7 @@ func (e *Env) handleRequestPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	switch r.Method {
 	case "GET":
-		err = post.GetAll(w, r)
+		err = post.Get(w, r)
 	case "POST":
 		err = post.Create(w, r)
 	case "PUT":

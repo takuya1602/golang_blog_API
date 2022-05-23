@@ -9,6 +9,8 @@ import (
 type IPostService interface {
 	GetAll() ([]dto.PostModel, error)
 	GetBySlug(string) (dto.PostModel, error)
+	GetWithCategoryQuery(string) ([]dto.PostModel, error)
+	GetWithSubCategoryQuery(string) ([]dto.PostModel, error)
 	Create(dto.PostModel) error
 	Update(dto.PostModel) error
 	Delete(dto.PostModel) error
@@ -51,6 +53,24 @@ func (s *PostService) convertEntitiesFromDtos(postDtos []dto.PostModel) (posts [
 
 func (s *PostService) GetAll() (postDtos []dto.PostModel, err error) {
 	posts, err := s.IPostRepository.GetAll()
+	if err != nil {
+		return
+	}
+	postDtos = s.convertToDtosFromEntities(posts)
+	return
+}
+
+func (s *PostService) GetWithCategoryQuery(categoryName string) (postDtos []dto.PostModel, err error) {
+	posts, err := s.IPostRepository.GetFilterCategory(categoryName)
+	if err != nil {
+		return
+	}
+	postDtos = s.convertToDtosFromEntities(posts)
+	return
+}
+
+func (s *PostService) GetWithSubCategoryQuery(subCategoryName string) (postDtos []dto.PostModel, err error) {
+	posts, err := s.IPostRepository.GetFilterSubCategory(subCategoryName)
 	if err != nil {
 		return
 	}
