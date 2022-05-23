@@ -1,4 +1,4 @@
-package handler
+package CLI
 
 import (
 	"backend/app/common/dto"
@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-type IUserHandler interface {
+type IUserCLI interface {
 	GetAll() error
 	ValidateUser() (dto.UserModel, error)
 	Create() error
@@ -19,17 +19,17 @@ type IUserHandler interface {
 	Delete() error
 }
 
-type UserHandler struct {
+type UserCLI struct {
 	service.IUserService
 }
 
-func NewUserHandler(srv service.IUserService) (iUserHandler IUserHandler) {
-	iUserHandler = &UserHandler{srv}
+func NewUserCLI(srv service.IUserService) (iUserCLI IUserCLI) {
+	iUserCLI = &UserCLI{srv}
 	return
 }
 
-func (h *UserHandler) GetAll() (err error) {
-	userDtos, err := h.IUserService.GetAll()
+func (c *UserCLI) GetAll() (err error) {
+	userDtos, err := c.IUserService.GetAll()
 	if err != nil {
 		return
 	}
@@ -39,21 +39,22 @@ func (h *UserHandler) GetAll() (err error) {
 	return
 }
 
-func (h *UserHandler) ValidateUser() (userDto dto.UserModel, err error) {
+func (c *UserCLI) ValidateUser() (userDto dto.UserModel, err error) {
 	fmt.Printf("username: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	username := scanner.Text()
 	fmt.Printf("password: ")
 	password, err := terminal.ReadPassword(0)
+	stringedPassword := string(password)
 	fmt.Printf("\n")
 	if err != nil {
 		return
 	}
 
-	credsDto := dto.NewCredsModel(username, password)
+	credsDto := dto.NewCredsModel(username, stringedPassword)
 
-	userDto, err = h.IUserService.ValidateUser(credsDto)
+	userDto, err = c.IUserService.ValidateUser(credsDto)
 	if err != nil {
 		return
 	}
@@ -61,7 +62,7 @@ func (h *UserHandler) ValidateUser() (userDto dto.UserModel, err error) {
 	return
 }
 
-func (h *UserHandler) Create() (err error) {
+func (c *UserCLI) Create() (err error) {
 	fmt.Printf("username: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -81,7 +82,7 @@ func (h *UserHandler) Create() (err error) {
 		Password: stringedHashedPassword,
 	}
 
-	err = h.IUserService.Create(userDto)
+	err = c.IUserService.Create(userDto)
 	if err != nil {
 		fmt.Printf("Error creating user: %s\n", err)
 		return
@@ -90,8 +91,8 @@ func (h *UserHandler) Create() (err error) {
 	return
 }
 
-func (h *UserHandler) Update() (err error) {
-	userDto, err := h.ValidateUser()
+func (c *UserCLI) Update() (err error) {
+	userDto, err := c.ValidateUser()
 	if err != nil {
 		panic(err)
 	}
@@ -101,9 +102,9 @@ func (h *UserHandler) Update() (err error) {
 	option := scanner.Text()
 	switch option {
 	case "u":
-		err = h.ChangeUserName(userDto)
+		err = c.ChangeUserName(userDto)
 	case "p":
-		err = h.ChangePassword(userDto)
+		err = c.ChangePassword(userDto)
 	default:
 		fmt.Println("There is no such option. valid option is (u/p)")
 		return
@@ -111,8 +112,8 @@ func (h *UserHandler) Update() (err error) {
 	return
 }
 
-func (h *UserHandler) Delete() (err error) {
-	userDto, err := h.ValidateUser()
+func (c *UserCLI) Delete() (err error) {
+	userDto, err := c.ValidateUser()
 	if err != nil {
 		return
 	}
@@ -121,7 +122,7 @@ func (h *UserHandler) Delete() (err error) {
 	scanner.Scan()
 	switch scanner.Text() {
 	case "y":
-		err = h.IUserService.Delete(userDto)
+		err = c.IUserService.Delete(userDto)
 		if err != nil {
 			return
 		}
@@ -134,13 +135,13 @@ func (h *UserHandler) Delete() (err error) {
 	return
 }
 
-func (h *UserHandler) ChangeUserName(userDto dto.UserModel) (err error) {
+func (c *UserCLI) ChangeUserName(userDto dto.UserModel) (err error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Printf("new username: ")
 	scanner.Scan()
 	newUsername := scanner.Text()
 	userDto.Name = newUsername
-	err = h.IUserService.Update(userDto)
+	err = c.IUserService.Update(userDto)
 	if err != nil {
 		return
 	}
@@ -148,7 +149,7 @@ func (h *UserHandler) ChangeUserName(userDto dto.UserModel) (err error) {
 	return
 }
 
-func (h *UserHandler) ChangePassword(userDto dto.UserModel) (err error) {
+func (c *UserCLI) ChangePassword(userDto dto.UserModel) (err error) {
 	fmt.Printf("new password: ")
 	newPassword, err := terminal.ReadPassword(0)
 	fmt.Printf("\n")
@@ -160,7 +161,7 @@ func (h *UserHandler) ChangePassword(userDto dto.UserModel) (err error) {
 	stringedHashedNewPassword := string(hashedNewPassword)
 
 	userDto.Password = stringedHashedNewPassword
-	err = h.IUserService.Update(userDto)
+	err = c.IUserService.Update(userDto)
 	fmt.Printf("%s's password has been changed\n", userDto.Name)
 	return
 }

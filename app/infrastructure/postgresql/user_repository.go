@@ -33,7 +33,7 @@ func (r *UserRepository) GetAll() (users []entity.User, err error) {
 func (r *UserRepository) ValidateUser(creds entity.Credentials) (user entity.User, err error) {
 	err = r.QueryRow("select * from users where username = $1", creds.Username).
 		Scan(&user.Id, &user.Name, &user.Password, &user.IsAdmin)
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), creds.Password)
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password))
 	if err != nil {
 		panic(err)
 	}
@@ -53,5 +53,10 @@ func (r *UserRepository) Update(user entity.User) (err error) {
 
 func (r *UserRepository) Delete(user entity.User) (err error) {
 	_, err = r.Exec("delete from users where id = $1", user.Id)
+	return
+}
+
+func (r *UserRepository) IsAdmin(id int) (isAdmin bool, err error) {
+	err = r.QueryRow("select is_admin from users where id = $1", id).Scan(&isAdmin)
 	return
 }

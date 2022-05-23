@@ -21,7 +21,7 @@ func main() {
 	}
 
 	if len(os.Args) > 1 {
-		user := di.InitUser(db)
+		user := di.InitUserCLI(db)
 		switch os.Args[1] {
 		case "showusers":
 			err = user.GetAll()
@@ -45,12 +45,51 @@ func main() {
 
 		e := Env{Db: db}
 
-		http.HandleFunc("/categories/", e.handleRequestCategory)
-		http.HandleFunc("/sub-categories/", e.handleRequestSubCategory)
-		http.HandleFunc("/posts/", e.handleRequestPost)
+		http.HandleFunc("/categories/", e.checkPermissionFromToken(e.handleRequestCategory))
+		http.HandleFunc("/sub-categories/", e.checkPermissionFromToken(e.handleRequestSubCategory))
+		http.HandleFunc("/posts/", e.checkPermissionFromToken(e.handleRequestPost))
+		http.HandleFunc("/admin/", e.handleRequestAdmin)
 
 		server.ListenAndServe()
 	}
+}
+
+func (e *Env) checkPermissionFromToken(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			h(w, r)
+		} else {
+			user := di.InitUser(e.Db)
+			isAdmin, err := user.ValidateToken(w, r)
+			if err != nil {
+				return
+			}
+			if isAdmin {
+				h(w, r)
+			} else {
+				http.Error(w, "You don't have permission", http.StatusUnauthorized)
+			}
+		}
+	}
+}
+
+func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
+	var err error
+	user := di.InitUser(e.Db)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == "POST" {
+		err = user.IssueToken(w, r)
+	} else {
+		fmt.Printf("Invalid method: %s\n", r.Method)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	return
 }
 
 func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {

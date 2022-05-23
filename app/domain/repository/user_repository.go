@@ -8,4 +8,5 @@ type IUserRepository interface {
 	Create(entity.User) error
 	Update(entity.User) error
 	Delete(entity.User) error
+	IsAdmin(int) (bool, error)
 }

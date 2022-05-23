@@ -2,7 +2,8 @@ package di
 
 import (
 	"backend/app/domain/service"
-	"backend/app/handler"
+	"backend/app/interface/CLI"
+	"backend/app/interface/handler"
 	"database/sql"
 
 	"backend/app/infrastructure/postgresql"
@@ -30,4 +31,10 @@ func InitUser(db *sql.DB) handler.IUserHandler {
 	r := postgresql.NewUserRepository(db)
 	s := service.NewUserService(r)
 	return handler.NewUserHandler(s)
+}
+
+func InitUserCLI(db *sql.DB) CLI.IUserCLI {
+	r := postgresql.NewUserRepository(db)
+	s := service.NewUserService(r)
+	return CLI.NewUserCLI(s)
 }

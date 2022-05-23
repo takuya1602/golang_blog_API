@@ -9,7 +9,11 @@ type UserModel struct {
 
 type CredentialsModel struct {
 	Username string
-	Password []byte
+	Password string
+}
+
+type AuthTokenModel struct {
+	Token string `json:"token"`
 }
 
 func NewUserModel(id int, name string, password string) (userModel UserModel) {
@@ -22,10 +26,17 @@ func NewUserModel(id int, name string, password string) (userModel UserModel) {
 	return
 }
 
-func NewCredsModel(username string, password []byte) (credsModel CredentialsModel) {
+func NewCredsModel(username string, password string) (credsModel CredentialsModel) {
 	credsModel = CredentialsModel{
 		Username: username,
 		Password: password,
+	}
+	return
+}
+
+func NewAuthTokenModel(token string) (authTokenModel AuthTokenModel) {
+	authTokenModel = AuthTokenModel{
+		Token: token,
 	}
 	return
 }

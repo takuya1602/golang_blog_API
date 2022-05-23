@@ -4,6 +4,12 @@ import (
 	"backend/app/common/dto"
 	"backend/app/domain/entity"
 	"backend/app/domain/repository"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/joho/godotenv"
 )
 
 type IUserService interface {
@@ -12,6 +18,8 @@ type IUserService interface {
 	Create(dto.UserModel) error
 	Update(dto.UserModel) error
 	Delete(dto.UserModel) error
+	IssueToken(id int) (dto.AuthTokenModel, error)
+	ValidateToken(dto.AuthTokenModel) (bool, error)
 }
 
 type UserService struct {
@@ -78,4 +86,56 @@ func (s *UserService) Delete(userDto dto.UserModel) (err error) {
 	user := s.convertToEntityFromDto(userDto)
 	err = s.IUserRepository.Delete(user)
 	return
+}
+
+func (s *UserService) IssueToken(userId int) (authTokenModel dto.AuthTokenModel, err error) {
+	claims := jwt.MapClaims{
+		"user_id": userId,
+		"iat":     time.Now().Unix(),
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	err = godotenv.Load(fmt.Sprint(".env", os.Getenv("GO_ENV")))
+	if err != nil {
+		panic(err)
+	}
+
+	secret := os.Getenv("SECRET_KEY")
+
+	tokenString, _ := token.SignedString([]byte(secret))
+
+	authTokenModel = dto.AuthTokenModel{
+		Token: tokenString,
+	}
+	return
+}
+
+func (s *UserService) ValidateToken(authTokenDto dto.AuthTokenModel) (isAdmin bool, err error) {
+	err = godotenv.Load(fmt.Sprint(".env", os.Getenv("GO_ENV")))
+	if err != nil {
+		panic(err)
+	}
+
+	secret := os.Getenv("SECRET_KEY")
+
+	authToken, err := jwt.Parse(authTokenDto.Token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+
+	if claims, ok := authToken.Claims.(jwt.MapClaims); ok && authToken.Valid {
+		userId := int(claims["user_id"].(float64))
+		isAdmin, err = s.IUserRepository.IsAdmin(userId)
+		if err != nil {
+			return
+		}
+	} else {
+		fmt.Println(err)
+	}
+	return
+
 }

@@ -9,7 +9,11 @@ type User struct {
 
 type Credentials struct {
 	Username string
-	Password []byte
+	Password string
+}
+
+type AuthToken struct {
+	Token string
 }
 
 func NewUser(id int, name string, password string) (user User) {
@@ -22,10 +26,17 @@ func NewUser(id int, name string, password string) (user User) {
 	return
 }
 
-func NewCreds(username string, password []byte) (creds Credentials) {
+func NewCreds(username string, password string) (creds Credentials) {
 	creds = Credentials{
 		Username: username,
 		Password: password,
+	}
+	return
+}
+
+func NewAuthToken(token string) (authToken AuthToken) {
+	authToken = AuthToken{
+		Token: token,
 	}
 	return
 }
