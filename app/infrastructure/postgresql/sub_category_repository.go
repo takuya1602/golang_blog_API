@@ -28,7 +28,12 @@ func (r *SubCategoryRepository) GetAll() (subCategories []entity.SubCategory, er
 	return
 }
 
-func (r *SubCategoryRepository) GetFilterParentCategory(parentCategoryId int) (subCategories []entity.SubCategory, er error) {
+func (r *SubCategoryRepository) GetFilterParentCategory(parentCategoryName string) (subCategories []entity.SubCategory, er error) {
+	var parentCategoryId int
+	err := r.QueryRow("select id from categories where slug = $1", parentCategoryName).Scan(&parentCategoryId)
+	if err != nil {
+		return
+	}
 	rows, err := r.Query("select * from sub_categories where parent_category_id = $1", parentCategoryId)
 	if err != nil {
 		return
@@ -76,7 +81,6 @@ func (r *SubCategoryRepository) Delete(subCategory entity.SubCategory) (err erro
 }
 
 func (r *SubCategoryRepository) GetParentCategoryId(categoryName string) (parentCategoryId int, err error) {
-	err = r.QueryRow("select id from categories where slug = $1", categoryName).
-		Scan(&parentCategoryId)
+
 	return
 }

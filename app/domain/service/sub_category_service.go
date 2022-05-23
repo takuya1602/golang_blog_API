@@ -60,11 +60,7 @@ func (s *SubCategoryService) GetAll() (subCategoryDtos []dto.SubCategoryModel, e
 }
 
 func (s *SubCategoryService) GetWithQuery(categoryName string) (subCategoryDtos []dto.SubCategoryModel, err error) {
-	parentCategoryId, err := s.ISubCategoryRepository.GetParentCategoryId(categoryName)
-	if err != nil {
-		return
-	}
-	subCategories, err := s.ISubCategoryRepository.GetFilterParentCategory(parentCategoryId)
+	subCategories, err := s.ISubCategoryRepository.GetFilterParentCategory(categoryName)
 	if err != nil {
 		return
 	}
