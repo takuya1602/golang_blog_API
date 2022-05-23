@@ -2,8 +2,8 @@ package service
 
 import (
 	"backend/app/common/dto"
+	"backend/app/domain/entity"
 	"backend/app/domain/repository"
-	"backend/app/infrastructure/postgresql/entity"
 )
 
 type ICategoryService interface {
@@ -15,10 +15,10 @@ type ICategoryService interface {
 }
 
 type CategoryService struct {
-	repository.ICategoryRepositry
+	repository.ICategoryRepository
 }
 
-func NewCategoryService(repo repository.ICategoryRepositry) (categoryService ICategoryService) {
+func NewCategoryService(repo repository.ICategoryRepository) (categoryService ICategoryService) {
 	categoryService = &CategoryService{repo}
 	return
 }
@@ -50,7 +50,7 @@ func (s *CategoryService) convertToEntitiesFromDtos(categoryDtos []dto.CategoryM
 }
 
 func (s *CategoryService) GetBySlug(slug string) (categoryDto dto.CategoryModel, err error) {
-	category, err := s.ICategoryRepositry.GetBySlug(slug)
+	category, err := s.ICategoryRepository.GetBySlug(slug)
 	if err != nil {
 		return
 	}
@@ -59,7 +59,7 @@ func (s *CategoryService) GetBySlug(slug string) (categoryDto dto.CategoryModel,
 }
 
 func (s *CategoryService) GetAll() (categoryDtos []dto.CategoryModel, err error) {
-	categories, err := s.ICategoryRepositry.GetAll()
+	categories, err := s.ICategoryRepository.GetAll()
 	if err != nil {
 		return
 	}
@@ -69,18 +69,18 @@ func (s *CategoryService) GetAll() (categoryDtos []dto.CategoryModel, err error)
 
 func (s *CategoryService) Create(categoryDto dto.CategoryModel) (err error) {
 	category := s.convertToEntityFromDto(categoryDto)
-	err = s.ICategoryRepositry.Create(category)
+	err = s.ICategoryRepository.Create(category)
 	return
 }
 
 func (s *CategoryService) Update(categoryDto dto.CategoryModel) (err error) {
 	category := s.convertToEntityFromDto(categoryDto)
-	err = s.ICategoryRepositry.Update(category)
+	err = s.ICategoryRepository.Update(category)
 	return
 }
 
 func (s *CategoryService) Delete(categoryDto dto.CategoryModel) (err error) {
 	category := s.convertToEntityFromDto(categoryDto)
-	err = s.ICategoryRepositry.Delete(category)
+	err = s.ICategoryRepository.Delete(category)
 	return
 }

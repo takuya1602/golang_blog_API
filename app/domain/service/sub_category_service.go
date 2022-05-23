@@ -2,8 +2,8 @@ package service
 
 import (
 	"backend/app/common/dto"
+	"backend/app/domain/entity"
 	"backend/app/domain/repository"
-	"backend/app/infrastructure/postgresql/entity"
 )
 
 type ISubCategoryService interface {

@@ -37,7 +37,7 @@ create table users (
     id serial primary key,
     username varchar(255),
     password varchar(255),
-    is_admin boolean
+    is_admin boolean default TRUE
 );
 
 create trigger update_posts_timestamp before update on posts for each row execute procedure update_timestamp();

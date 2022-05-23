@@ -1,8 +1,8 @@
-package repository
+package postgresql
 
 import (
+	"backend/app/domain/entity"
 	"backend/app/domain/repository"
-	"backend/app/infrastructure/postgresql/entity"
 	"database/sql"
 )
 
@@ -10,7 +10,7 @@ type CategoryRepository struct {
 	*sql.DB
 }
 
-func NewCategoryRepository(db *sql.DB) (categoryRepository repository.ICategoryRepositry) {
+func NewCategoryRepository(db *sql.DB) (categoryRepository repository.ICategoryRepository) {
 	categoryRepository = &CategoryRepository{db}
 	return
 }

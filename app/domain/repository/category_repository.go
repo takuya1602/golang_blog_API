@@ -1,8 +1,8 @@
 package repository
 
-import "backend/app/infrastructure/postgresql/entity"
+import "backend/app/domain/entity"
 
-type ICategoryRepositry interface {
+type ICategoryRepository interface {
 	GetAll() (categories []entity.Category, err error)
 	GetBySlug(slug string) (category entity.Category, err error)
 	Create(category entity.Category) (err error)

@@ -1,6 +1,6 @@
 package repository
 
-import "backend/app/infrastructure/postgresql/entity"
+import "backend/app/domain/entity"
 
 type IPostRepository interface {
 	GetAll() ([]entity.Post, error)

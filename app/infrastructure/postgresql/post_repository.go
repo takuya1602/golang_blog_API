@@ -1,8 +1,8 @@
-package repository
+package postgresql
 
 import (
+	"backend/app/domain/entity"
 	"backend/app/domain/repository"
-	"backend/app/infrastructure/postgresql/entity"
 	"database/sql"
 	"fmt"
 )

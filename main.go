@@ -3,7 +3,9 @@ package main
 import (
 	"backend/app/common/di"
 	"database/sql"
+	"fmt"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -17,17 +19,38 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	server := http.Server{
-		Addr: "127.0.0.1:8080",
+
+	if len(os.Args) > 1 {
+		user := di.InitUser(db)
+		switch os.Args[1] {
+		case "showusers":
+			err = user.GetAll()
+		case "createsuperuser":
+			err = user.Create()
+		case "updateuser":
+			err = user.Update()
+		case "deleteuser":
+			err = user.Delete()
+		default:
+			fmt.Printf("there is no such method: %s\n", os.Args[1])
+		}
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	} else {
+		server := http.Server{
+			Addr: "127.0.0.1:8080",
+		}
+
+		e := Env{Db: db}
+
+		http.HandleFunc("/categories/", e.handleRequestCategory)
+		http.HandleFunc("/sub-categories/", e.handleRequestSubCategory)
+		http.HandleFunc("/posts/", e.handleRequestPost)
+
+		server.ListenAndServe()
 	}
-
-	e := Env{Db: db}
-
-	http.HandleFunc("/categories/", e.handleRequestCategory)
-	http.HandleFunc("/sub-categories/", e.handleRequestSubCategory)
-	http.HandleFunc("/posts/", e.handleRequestPost)
-
-	server.ListenAndServe()
 }
 
 func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {
