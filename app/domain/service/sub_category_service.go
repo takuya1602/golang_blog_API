@@ -8,6 +8,7 @@ import (
 
 type ISubCategoryService interface {
 	GetAll() ([]dto.SubCategoryModel, error)
+	GetWithQuery(string) ([]dto.SubCategoryModel, error)
 	GetBySlug(string) (dto.SubCategoryModel, error)
 	Create(dto.SubCategoryModel) error
 	Update(dto.SubCategoryModel) error
@@ -51,6 +52,19 @@ func (s *SubCategoryService) convertToEntitiesFromDtos(subCategoryDtos []dto.Sub
 
 func (s *SubCategoryService) GetAll() (subCategoryDtos []dto.SubCategoryModel, err error) {
 	subCategories, err := s.ISubCategoryRepository.GetAll()
+	if err != nil {
+		return
+	}
+	subCategoryDtos = s.convertToDtosFromEntities(subCategories)
+	return
+}
+
+func (s *SubCategoryService) GetWithQuery(categoryName string) (subCategoryDtos []dto.SubCategoryModel, err error) {
+	parentCategoryId, err := s.ISubCategoryRepository.GetParentCategoryId(categoryName)
+	if err != nil {
+		return
+	}
+	subCategories, err := s.ISubCategoryRepository.GetFilterParentCategory(parentCategoryId)
 	if err != nil {
 		return
 	}

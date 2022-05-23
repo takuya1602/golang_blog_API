@@ -28,6 +28,19 @@ func (r *SubCategoryRepository) GetAll() (subCategories []entity.SubCategory, er
 	return
 }
 
+func (r *SubCategoryRepository) GetFilterParentCategory(parentCategoryId int) (subCategories []entity.SubCategory, er error) {
+	rows, err := r.Query("select * from sub_categories where parent_category_id = $1", parentCategoryId)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var subCategory entity.SubCategory
+		rows.Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId)
+		subCategories = append(subCategories, subCategory)
+	}
+	return
+}
+
 func (r *SubCategoryRepository) GetBySlug(slug string) (subCategory entity.SubCategory, err error) {
 	err = r.QueryRow("select id, name, slug, parent_category_id from sub_categories where slug = $1", slug).
 		Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId)
@@ -59,5 +72,11 @@ func (r *SubCategoryRepository) Delete(subCategory entity.SubCategory) (err erro
 	if err != nil {
 		return
 	}
+	return
+}
+
+func (r *SubCategoryRepository) GetParentCategoryId(categoryName string) (parentCategoryId int, err error) {
+	err = r.QueryRow("select id from categories where slug = $1", categoryName).
+		Scan(&parentCategoryId)
 	return
 }

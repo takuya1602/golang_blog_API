@@ -122,7 +122,7 @@ func (e *Env) handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	switch r.Method {
 	case "GET":
-		err = subCategory.GetAll(w, r)
+		err = subCategory.Get(w, r)
 	case "POST":
 		err = subCategory.Create(w, r)
 	case "PUT":
