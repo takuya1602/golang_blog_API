@@ -79,8 +79,3 @@ func (r *SubCategoryRepository) Delete(subCategory entity.SubCategory) (err erro
 	}
 	return
 }
-
-func (r *SubCategoryRepository) GetParentCategoryId(categoryName string) (parentCategoryId int, err error) {
-
-	return
-}

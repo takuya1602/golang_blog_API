@@ -16,7 +16,7 @@ func NewCategoryRepository(db *sql.DB) (categoryRepository repository.ICategoryR
 }
 
 func (r *CategoryRepository) GetAll() (categories []entity.Category, err error) {
-	rows, err := r.Query("select id, name, slug from categories")
+	rows, err := r.Query("select * from categories")
 	if err != nil {
 		return
 	}
