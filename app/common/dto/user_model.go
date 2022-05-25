@@ -8,8 +8,8 @@ type UserModel struct {
 }
 
 type CredentialsModel struct {
-	Username string
-	Password string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type AuthTokenModel struct {

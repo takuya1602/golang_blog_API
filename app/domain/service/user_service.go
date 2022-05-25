@@ -18,7 +18,7 @@ type IUserService interface {
 	Create(dto.UserModel) error
 	Update(dto.UserModel) error
 	Delete(dto.UserModel) error
-	IssueToken(id int) (dto.AuthTokenModel, error)
+	IssueToken(int) (dto.AuthTokenModel, error)
 	ValidateToken(dto.AuthTokenModel) (bool, error)
 }
 
