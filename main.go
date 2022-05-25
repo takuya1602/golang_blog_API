@@ -56,7 +56,7 @@ func main() {
 
 func (e *Env) checkPermissionFromToken(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
+		if r.Method == "GET" || r.Method == "OPTIONS" {
 			h(w, r)
 		} else {
 			user := di.InitUser(e.Db)
@@ -78,7 +78,7 @@ func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 	user := di.InitUser(e.Db)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	if r.Method == "POST" {
 		err = user.IssueToken(w, r)
 	} else {
@@ -97,7 +97,7 @@ func (e *Env) handleRequestCategory(w http.ResponseWriter, r *http.Request) {
 	category := di.InitCategory(e.Db)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	switch r.Method {
 	case "GET":
 		err = category.GetAll(w, r)
@@ -119,7 +119,7 @@ func (e *Env) handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
 	subCategory := di.InitSubCategory(e.Db)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	switch r.Method {
 	case "GET":
 		err = subCategory.Get(w, r)
@@ -141,7 +141,7 @@ func (e *Env) handleRequestPost(w http.ResponseWriter, r *http.Request) {
 	post := di.InitPost(e.Db)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	switch r.Method {
 	case "GET":
 		err = post.Get(w, r)
