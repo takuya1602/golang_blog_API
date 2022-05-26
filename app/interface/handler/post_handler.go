@@ -10,6 +10,7 @@ import (
 
 type IPostHandler interface {
 	Get(w http.ResponseWriter, r *http.Request) (err error)
+	GetBySlug(w http.ResponseWriter, r *http.Request, slug string) (err error)
 	Create(w http.ResponseWriter, r *http.Request) (err error)
 	Update(w http.ResponseWriter, r *http.Request) (err error)
 	Delete(w http.ResponseWriter, r *http.Request) (err error)
@@ -46,6 +47,20 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) (err error) {
 		}
 	}
 	output, err := json.MarshalIndent(&postDtos, "", "\t")
+	if err != nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(output)
+	return
+}
+
+func (h *PostHandler) GetBySlug(w http.ResponseWriter, r *http.Request, slug string) (err error) {
+	postDto, err := h.IPostService.GetBySlug(slug)
+	if err != nil {
+		return
+	}
+	output, err := json.MarshalIndent(&postDto, "", "\t")
 	if err != nil {
 		return
 	}

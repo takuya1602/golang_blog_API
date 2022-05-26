@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 
 	_ "github.com/lib/pq"
 )
@@ -45,10 +46,12 @@ func main() {
 
 		e := Env{Db: db}
 
-		http.HandleFunc("/categories/", e.checkPermissionFromToken(e.handleRequestCategory))
-		http.HandleFunc("/sub-categories/", e.checkPermissionFromToken(e.handleRequestSubCategory))
-		http.HandleFunc("/posts/", e.checkPermissionFromToken(e.handleRequestPost))
-		http.HandleFunc("/admin/", e.handleRequestAdmin)
+		http.HandleFunc("/api/v1/categories/", e.checkPermissionFromToken(e.handleRequestCategory))
+		http.HandleFunc("/api/v1/sub-categories/", e.checkPermissionFromToken(e.handleRequestSubCategory))
+		http.HandleFunc("/api/v1/posts/", e.checkPermissionFromToken(e.handleRequestPost))
+		http.HandleFunc("/api/v1/admin/", e.handleRequestAdmin)
+
+		http.Handle("/api/v1/media/", http.StripPrefix("/api/v1/media/", http.FileServer(http.Dir("media"))))
 
 		server.ListenAndServe()
 	}
@@ -144,7 +147,13 @@ func (e *Env) handleRequestPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	switch r.Method {
 	case "GET":
-		err = post.Get(w, r)
+		slug := path.Base(r.URL.Path)
+		if slug == "/posts/" {
+			err = post.Get(w, r)
+		} else {
+			err = post.GetBySlug(w, r, slug)
+		}
+
 	case "POST":
 		err = post.Create(w, r)
 	case "PUT":

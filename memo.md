@@ -16,5 +16,3 @@
 | Add post                             | /posts                    | POST   |
 | Update the post                      | /posts/:slug              | PUT    |
 | Delete the post                      | /posts/:slug              | DELETE |
-
-tet

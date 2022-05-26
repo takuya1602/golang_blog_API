@@ -163,6 +163,34 @@ func TestPostHandler_Get(t *testing.T) {
 	)
 }
 
+func TestPostHandler_GetBySlug(t *testing.T) {
+	postDto := dto.PostModel{
+		Id:              1,
+		CategoryId:      1,
+		SubCategoryId:   1,
+		Title:           "testPost1",
+		Slug:            "test-post-1",
+		EyeCatchingImg:  "test_post_1.png",
+		Content:         "This is 1st post",
+		MetaDescription: "This is 1st post",
+		IsPublic:        true,
+	}
+
+	s := new(mocks.IPostService)
+
+	s.On("GetBySlug", postDto.Slug).Return(postDto, nil)
+
+	h := NewPostHandler(s)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/posts/test-post-1/", nil)
+
+	err := h.GetBySlug(w, r, postDto.Slug)
+
+	assert.NoError(t, err)
+	s.AssertExpectations(t)
+}
+
 func TestPostHandler_Create(t *testing.T) {
 	postDto := dto.PostModel{
 		Id:              1,
