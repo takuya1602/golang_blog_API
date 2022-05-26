@@ -148,7 +148,7 @@ func (e *Env) handleRequestPost(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		slug := path.Base(r.URL.Path)
-		if slug == "/posts/" {
+		if slug == "posts" {
 			err = post.Get(w, r)
 		} else {
 			err = post.GetBySlug(w, r, slug)
