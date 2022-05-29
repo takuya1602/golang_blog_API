@@ -9,139 +9,165 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSubCategoryService_GetAll(t *testing.T) {
-	subCategories := []entity.SubCategory{
-		{
-			Id:               1,
-			Name:             "testSubCategory1",
-			Slug:             "test-sub-category-1",
-			ParentCategoryId: 1,
-		},
-		{
-			Id:               2,
-			Name:             "testSubCategory2",
-			Slug:             "test-sub-category-2",
-			ParentCategoryId: 1,
-		},
-	}
-
-	r := new(mocks.ISubCategoryRepository)
-
-	r.On("GetAll").Return(subCategories, nil)
-
-	s := NewSubCategoryService(r)
-
-	ret, err := s.GetAll()
-
-	assert.NoError(t, err)
+func assertSubCategories(t *testing.T, ret []dto.SubCategoryModel, subCategories []entity.SubCategory) {
 	for i, r := range ret {
 		assert.Equal(t, r.Id, subCategories[i].Id)
 		assert.Equal(t, r.Name, subCategories[i].Name)
 		assert.Equal(t, r.Slug, subCategories[i].Slug)
 		assert.Equal(t, r.ParentCategoryId, subCategories[i].ParentCategoryId)
+		assert.Equal(t, r.ParentCategoryName, subCategories[i].ParentCategoryName)
+		assert.Equal(t, r.ParentCategorySlug, subCategories[i].ParentCategorySlug)
 	}
-	r.AssertExpectations(t)
 }
 
-func TestSubCategoryService_GetWithQuery(t *testing.T) {
+func TestSubCategoryService_GetSubCategories(t *testing.T) {
 	subCategories := []entity.SubCategory{
 		{
-			Id:               1,
-			Name:             "testSubCategory1",
-			Slug:             "test-sub-category-1",
-			ParentCategoryId: 1,
+			Id:                 1,
+			Name:               "testSubCategory1",
+			Slug:               "test-sub-category-1",
+			ParentCategoryId:   1,
+			ParentCategoryName: "testCategory1",
+			ParentCategorySlug: "test-category-1",
 		},
 		{
-			Id:               2,
-			Name:             "testSubCategory2",
-			Slug:             "test-sub-category-2",
-			ParentCategoryId: 1,
+			Id:                 2,
+			Name:               "testSubCategory2",
+			Slug:               "test-sub-category-2",
+			ParentCategoryId:   1,
+			ParentCategoryName: "testCategory1",
+			ParentCategorySlug: "test-category-1",
 		},
 	}
-	slug := "test-category-1"
 
-	r := new(mocks.ISubCategoryRepository)
+	t.Run(
+		"with query params: category-name",
+		func(t *testing.T) {
+			r := new(mocks.ISubCategoryRepository)
 
-	r.On("GetFilterParentCategory", slug).Return(subCategories, nil)
+			queryParams := map[string][]string{
+				"category-name": {
+					subCategories[0].Slug,
+				},
+			}
 
-	s := NewSubCategoryService(r)
+			r.On("GetSubCategories", queryParams).Return(subCategories, nil)
 
-	ret, err := s.GetWithQuery(slug)
+			s := NewSubCategoryService(r)
 
-	assert.NoError(t, err)
-	for i, r := range ret {
-		assert.Equal(t, r.Id, subCategories[i].Id)
-		assert.Equal(t, r.Name, subCategories[i].Name)
-		assert.Equal(t, r.Slug, subCategories[i].Slug)
-		assert.Equal(t, r.ParentCategoryId, subCategories[i].ParentCategoryId)
+			ret, err := s.GetSubCategories(queryParams)
+
+			assert.NoError(t, err)
+			assertSubCategories(t, ret, subCategories)
+			r.AssertExpectations(t)
+		},
+	)
+
+	t.Run(
+		"without query params",
+		func(t *testing.T) {
+			r := new(mocks.ISubCategoryRepository)
+
+			var queryParams map[string][]string
+
+			r.On("GetSubCategories", queryParams).Return(subCategories, nil)
+
+			s := NewSubCategoryService(r)
+
+			ret, err := s.GetSubCategories(queryParams)
+
+			assert.NoError(t, err)
+			assertSubCategories(t, ret, subCategories)
+			r.AssertExpectations(t)
+		},
+	)
+}
+
+func TestSubCategoryService_CRUD(t *testing.T) {
+	subCategory := entity.SubCategory{
+		Id:                 1,
+		Name:               "testSubCategory1",
+		Slug:               "test-sub-category-1",
+		ParentCategoryId:   1,
+		ParentCategoryName: "testCategory1",
+		ParentCategorySlug: "test-category-1",
 	}
-	r.AssertExpectations(t)
-}
 
-func TestSubCategoryService_GetBySlug(t *testing.T) {
-	subCategory := entity.NewSubCategory(1, "testSubCategory1", "test-sub-category-1", 1)
-	slug := "test-sub-category-1"
+	subCategoryDto := dto.SubCategoryModel{
+		Id:                 1,
+		Name:               "testSubCategory1",
+		Slug:               "test-sub-category-1",
+		ParentCategoryId:   1,
+		ParentCategoryName: "testCategory1",
+		ParentCategorySlug: "test-category-1",
+	}
 
-	r := new(mocks.ISubCategoryRepository)
+	t.Run(
+		"GetSubCategoryBySlug",
+		func(t *testing.T) {
+			r := new(mocks.ISubCategoryRepository)
 
-	r.On("GetBySlug", slug).Return(subCategory, nil)
+			r.On("GetSubCategoryBySlug", subCategory.Slug).Return(subCategory, nil)
+			s := NewSubCategoryService(r)
 
-	s := NewSubCategoryService(r)
+			ret, err := s.GetSubCategoryBySlug(subCategory.Slug)
 
-	ret, err := s.GetBySlug(slug)
+			assert.NoError(t, err)
+			assert.Equal(t, ret.Id, subCategory.Id)
+			assert.Equal(t, ret.Name, subCategory.Name)
+			assert.Equal(t, ret.Slug, subCategory.Slug)
+			assert.Equal(t, ret.ParentCategoryId, subCategory.ParentCategoryId)
+			assert.Equal(t, ret.ParentCategoryName, subCategory.ParentCategoryName)
+			assert.Equal(t, ret.ParentCategorySlug, subCategory.ParentCategorySlug)
+			r.AssertExpectations(t)
+		},
+	)
 
-	assert.NoError(t, err)
-	assert.Equal(t, ret.Id, subCategory.Id)
-	assert.Equal(t, ret.Name, subCategory.Name)
-	assert.Equal(t, ret.Slug, subCategory.Slug)
-	assert.Equal(t, ret.ParentCategoryId, subCategory.ParentCategoryId)
-	r.AssertExpectations(t)
-}
+	t.Run(
+		"Create",
+		func(t *testing.T) {
+			r := new(mocks.ISubCategoryRepository)
 
-func TestSubCategoryService_Create(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", 1)
-	subCategory := entity.NewSubCategory(1, "testSubCategory1", "test-sub-category-1", 1)
+			r.On("Create", subCategory).Return(nil)
 
-	r := new(mocks.ISubCategoryRepository)
+			s := NewSubCategoryService(r)
 
-	r.On("Create", subCategory).Return(nil)
+			err := s.Create(subCategoryDto)
 
-	s := NewSubCategoryService(r)
+			assert.NoError(t, err)
+			r.AssertExpectations(t)
+		},
+	)
 
-	err := s.Create(subCategoryDto)
+	t.Run(
+		"Update",
+		func(t *testing.T) {
+			r := new(mocks.ISubCategoryRepository)
 
-	assert.NoError(t, err)
-	r.AssertExpectations(t)
-}
+			r.On("Update", subCategory).Return(nil)
 
-func TestSubCategoryService_Update(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", 1)
-	subCategory := entity.NewSubCategory(1, "testSubCategory1", "test-sub-category-1", 1)
+			s := NewSubCategoryService(r)
 
-	r := new(mocks.ISubCategoryRepository)
+			err := s.Update(subCategoryDto)
 
-	r.On("Update", subCategory).Return(nil)
+			assert.NoError(t, err)
+			r.AssertExpectations(t)
+		},
+	)
 
-	s := NewSubCategoryService(r)
+	t.Run(
+		"Delete",
+		func(t *testing.T) {
+			r := new(mocks.ISubCategoryRepository)
 
-	err := s.Update(subCategoryDto)
+			r.On("Delete", subCategory).Return(nil)
 
-	assert.NoError(t, err)
-	r.AssertExpectations(t)
-}
+			s := NewSubCategoryService(r)
 
-func TestSubCategoryService_Delete(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", 1)
-	subCategory := entity.NewSubCategory(1, "testSubCategory1", "test-sub-category-1", 1)
+			err := s.Delete(subCategoryDto)
 
-	r := new(mocks.ISubCategoryRepository)
-
-	r.On("Delete", subCategory).Return(nil)
-
-	s := NewSubCategoryService(r)
-
-	err := s.Delete(subCategoryDto)
-
-	assert.NoError(t, err)
-	r.AssertExpectations(t)
+			assert.NoError(t, err)
+			r.AssertExpectations(t)
+		},
+	)
 }

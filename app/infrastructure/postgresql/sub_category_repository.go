@@ -15,40 +15,53 @@ func NewSubcategoryRepository(db *sql.DB) (subCategoryRepository repository.ISub
 	return
 }
 
-func (r *SubCategoryRepository) GetAll() (subCategories []entity.SubCategory, err error) {
-	rows, err := r.Query("select id, name, slug, parent_category_id from sub_categories")
+func (r *SubCategoryRepository) GetSubCategories(queryParams map[string][]string) (subCategories []entity.SubCategory, err error) {
+	var rows *sql.Rows
+	// join 2 tables (sub_categories, categories)
+	// on sub_categories.parent_category_id = categories.id
+	if categorySlugs, ok := queryParams["category-name"]; ok { // given category-name as query-params
+		categorySlug := categorySlugs[0]
+		rows, err = r.Query(`
+			select 
+			sub_categories.id as id, sub_categories.name, sub_categories.slug,
+			categories.id as parent_category_id, categories.name as parent_category_name, categories.slug as parent_category_slug 
+			from sub_categories 
+			inner join categories 
+			on sub_categories.parent_category_id = categories.id
+			where categories.slug = $1
+	`, categorySlug)
+	} else { // no query-params; return all sub-categories
+		rows, err = r.Query(`
+			select 
+			sub_categories.id as id, sub_categories.name, sub_categories.slug, 
+			categories.id as parent_category_id, categories.name as parent_category_name, categories.slug as parent_category_slug 
+			from sub_categories 
+			inner join categories
+			on sub_categories.parent_category_id = categories.id
+	`)
+	}
 	if err != nil {
 		return
 	}
 	for rows.Next() {
 		var subCategory entity.SubCategory
-		rows.Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId)
+		rows.Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId, &subCategory.ParentCategoryName, &subCategory.ParentCategorySlug)
 		subCategories = append(subCategories, subCategory)
 	}
 	return
 }
 
-func (r *SubCategoryRepository) GetFilterParentCategory(parentCategoryName string) (subCategories []entity.SubCategory, er error) {
-	var parentCategoryId int
-	err := r.QueryRow("select id from categories where slug = $1", parentCategoryName).Scan(&parentCategoryId)
-	if err != nil {
-		return
-	}
-	rows, err := r.Query("select * from sub_categories where parent_category_id = $1", parentCategoryId)
-	if err != nil {
-		return
-	}
-	for rows.Next() {
-		var subCategory entity.SubCategory
-		rows.Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId)
-		subCategories = append(subCategories, subCategory)
-	}
-	return
-}
-
-func (r *SubCategoryRepository) GetBySlug(slug string) (subCategory entity.SubCategory, err error) {
-	err = r.QueryRow("select id, name, slug, parent_category_id from sub_categories where slug = $1", slug).
-		Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId)
+func (r *SubCategoryRepository) GetSubCategoryBySlug(slug string) (subCategory entity.SubCategory, err error) {
+	err = r.QueryRow(`
+		select
+		sub_categories.id as id, sub_categories.name, sub_categories.slug,
+		categories.name as parent_category_name, categories.slug as parent_category_slug 
+		from sub_categories
+		inner join categories
+		on sub_categories.parent_category_id = categories.id
+		where sub_categories.slug = $1
+	`, slug).
+		Scan(&subCategory.Id, &subCategory.Name, &subCategory.Slug, &subCategory.ParentCategoryId, &subCategory.ParentCategoryName, &subCategory.ParentCategorySlug)
 	if err != nil {
 		return
 	}

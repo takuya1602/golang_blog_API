@@ -7,9 +7,8 @@ import (
 )
 
 type ISubCategoryService interface {
-	GetAll() ([]dto.SubCategoryModel, error)
-	GetWithQuery(string) ([]dto.SubCategoryModel, error)
-	GetBySlug(string) (dto.SubCategoryModel, error)
+	GetSubCategories(map[string][]string) ([]dto.SubCategoryModel, error)
+	GetSubCategoryBySlug(string) (dto.SubCategoryModel, error)
 	Create(dto.SubCategoryModel) error
 	Update(dto.SubCategoryModel) error
 	Delete(dto.SubCategoryModel) error
@@ -25,33 +24,47 @@ func NewSubCategoryService(repo repository.ISubCategoryRepository) (subCategoryS
 }
 
 func (s *SubCategoryService) convertToDtoFromEntity(subCategory entity.SubCategory) (subCategoryDto dto.SubCategoryModel) {
-	subCategoryDto = dto.NewSubCategoryModel(subCategory.Id, subCategory.Name, subCategory.Slug, subCategory.ParentCategoryId)
+	subCategoryDto = dto.SubCategoryModel{
+		Id:                 subCategory.Id,
+		Name:               subCategory.Name,
+		Slug:               subCategory.Slug,
+		ParentCategoryId:   subCategory.ParentCategoryId,
+		ParentCategoryName: subCategory.ParentCategoryName,
+		ParentCategorySlug: subCategory.ParentCategorySlug,
+	}
 	return
 }
 
 func (s *SubCategoryService) convertToDtosFromEntities(subCategories []entity.SubCategory) (subCategoryDtos []dto.SubCategoryModel) {
 	for _, subCategory := range subCategories {
-		subCategoryDto := dto.NewSubCategoryModel(subCategory.Id, subCategory.Name, subCategory.Slug, subCategory.ParentCategoryId)
+		subCategoryDto := s.convertToDtoFromEntity(subCategory)
 		subCategoryDtos = append(subCategoryDtos, subCategoryDto)
 	}
 	return
 }
 
 func (s *SubCategoryService) convertToEntityFromDto(subCategoryDto dto.SubCategoryModel) (subCategory entity.SubCategory) {
-	subCategory = entity.NewSubCategory(subCategoryDto.Id, subCategoryDto.Name, subCategoryDto.Slug, subCategoryDto.ParentCategoryId)
+	subCategory = entity.SubCategory{
+		Id:                 subCategoryDto.Id,
+		Name:               subCategoryDto.Name,
+		Slug:               subCategoryDto.Slug,
+		ParentCategoryId:   subCategoryDto.ParentCategoryId,
+		ParentCategoryName: subCategoryDto.ParentCategoryName,
+		ParentCategorySlug: subCategoryDto.ParentCategorySlug,
+	}
 	return
 }
 
 func (s *SubCategoryService) convertToEntitiesFromDtos(subCategoryDtos []dto.SubCategoryModel) (subCategories []entity.SubCategory) {
 	for _, subCategoryDto := range subCategoryDtos {
-		subCategory := entity.NewSubCategory(subCategoryDto.Id, subCategoryDto.Name, subCategoryDto.Slug, subCategoryDto.ParentCategoryId)
+		subCategory := s.convertToEntityFromDto(subCategoryDto)
 		subCategories = append(subCategories, subCategory)
 	}
 	return
 }
 
-func (s *SubCategoryService) GetAll() (subCategoryDtos []dto.SubCategoryModel, err error) {
-	subCategories, err := s.ISubCategoryRepository.GetAll()
+func (s *SubCategoryService) GetSubCategories(queryParams map[string][]string) (subCategoryDtos []dto.SubCategoryModel, err error) {
+	subCategories, err := s.ISubCategoryRepository.GetSubCategories(queryParams)
 	if err != nil {
 		return
 	}
@@ -59,17 +72,8 @@ func (s *SubCategoryService) GetAll() (subCategoryDtos []dto.SubCategoryModel, e
 	return
 }
 
-func (s *SubCategoryService) GetWithQuery(categoryName string) (subCategoryDtos []dto.SubCategoryModel, err error) {
-	subCategories, err := s.ISubCategoryRepository.GetFilterParentCategory(categoryName)
-	if err != nil {
-		return
-	}
-	subCategoryDtos = s.convertToDtosFromEntities(subCategories)
-	return
-}
-
-func (s *SubCategoryService) GetBySlug(slug string) (subCategoryDto dto.SubCategoryModel, err error) {
-	subCategory, err := s.ISubCategoryRepository.GetBySlug(slug)
+func (s *SubCategoryService) GetSubCategoryBySlug(slug string) (subCategoryDto dto.SubCategoryModel, err error) {
+	subCategory, err := s.ISubCategoryRepository.GetSubCategoryBySlug(slug)
 	if err != nil {
 		return
 	}

@@ -10,11 +10,11 @@ type ISubCategoryService struct {
 	mock.Mock
 }
 
-func (_m *ISubCategoryService) GetAll() (subCategoryDtos []dto.SubCategoryModel, err error) {
-	ret := _m.Called()
+func (_m *ISubCategoryService) GetSubCategories(queryParams map[string][]string) (subCategoryDtos []dto.SubCategoryModel, err error) {
+	ret := _m.Called(queryParams)
 
-	if rf, ok := ret.Get(0).(func() []dto.SubCategoryModel); ok {
-		subCategoryDtos = rf()
+	if rf, ok := ret.Get(0).(func(map[string][]string) []dto.SubCategoryModel); ok {
+		subCategoryDtos = rf(queryParams)
 	} else {
 		if ret.Get(0) != nil {
 			subCategoryDtos = ret.Get(0).([]dto.SubCategoryModel)
@@ -29,26 +29,7 @@ func (_m *ISubCategoryService) GetAll() (subCategoryDtos []dto.SubCategoryModel,
 	return
 }
 
-func (_m *ISubCategoryService) GetWithQuery(categoryName string) (subCategoryDtos []dto.SubCategoryModel, err error) {
-	ret := _m.Called(categoryName)
-
-	if rf, ok := ret.Get(0).(func(string) []dto.SubCategoryModel); ok {
-		subCategoryDtos = rf(categoryName)
-	} else {
-		if ret.Get(0) != nil {
-			subCategoryDtos = ret.Get(0).([]dto.SubCategoryModel)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		err = rf(categoryName)
-	} else {
-		err = ret.Error(1)
-	}
-	return
-}
-
-func (_m *ISubCategoryService) GetBySlug(slug string) (subCategoryDto dto.SubCategoryModel, err error) {
+func (_m *ISubCategoryService) GetSubCategoryBySlug(slug string) (subCategoryDto dto.SubCategoryModel, err error) {
 	ret := _m.Called(slug)
 
 	if rf, ok := ret.Get(0).(func(string) dto.SubCategoryModel); ok {

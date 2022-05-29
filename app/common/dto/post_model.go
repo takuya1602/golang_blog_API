@@ -4,8 +4,6 @@ import "time"
 
 type PostModel struct {
 	Id              int       `json:"id"`
-	CategoryId      int       `json:"category_id"`
-	SubCategoryId   int       `json:"sub_category_id"`
 	Title           string    `json:"title"`
 	Slug            string    `json:"slug"`
 	EyeCatchingImg  string    `json:"eye_catching_img"`
@@ -14,6 +12,12 @@ type PostModel struct {
 	IsPublic        bool      `json:"is_public"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	CategoryId      int       `json:"category_id"`
+	CategoryName    string    `json:"category_name"`
+	CategorySlug    string    `json:"category_slug"`
+	SubCategoryId   int       `json:"sub_category_id"`
+	SubCategoryName string    `json:"sub_category_name"`
+	SubCategorySlug string    `json:"sub_category_slug"`
 }
 
 func NewPostModel(id int, categoryId int, subCategoryId int, title string, slug string, eyeCatchingImg string, content string, metaDescription string, isPublic bool, createdAt time.Time, updatedAt time.Time) (postModel PostModel) {

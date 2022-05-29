@@ -10,26 +10,27 @@ type IPostService struct {
 	mock.Mock
 }
 
-func (_m *IPostService) GetAll() (postDtos []dto.PostModel, err error) {
-	ret := _m.Called()
+func (_m *IPostService) GetPosts(queryParams map[string][]string) (postDtos []dto.PostModel, err error) {
+	ret := _m.Called(queryParams)
 
-	if rf, ok := ret.Get(0).(func() []dto.PostModel); ok {
-		postDtos = rf()
+	if rf, ok := ret.Get(0).(func(map[string][]string) []dto.PostModel); ok {
+		postDtos = rf(queryParams)
 	} else {
 		if ret.Get(0) != nil {
 			postDtos = ret.Get(0).([]dto.PostModel)
+		} else {
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		err = rf()
+	if rf, ok := ret.Get(1).(func(map[string][]string) error); ok {
+		err = rf(queryParams)
 	} else {
 		err = ret.Error(1)
 	}
 	return
 }
 
-func (_m *IPostService) GetBySlug(slug string) (postDto dto.PostModel, err error) {
+func (_m *IPostService) GetPostBySlug(slug string) (postDto dto.PostModel, err error) {
 	ret := _m.Called(slug)
 
 	if rf, ok := ret.Get(0).(func(string) dto.PostModel); ok {
@@ -40,40 +41,6 @@ func (_m *IPostService) GetBySlug(slug string) (postDto dto.PostModel, err error
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		err = rf(slug)
-	} else {
-		err = ret.Error(1)
-	}
-	return
-}
-
-func (_m *IPostService) GetWithCategoryQuery(categoryName string) (postDtos []dto.PostModel, err error) {
-	ret := _m.Called(categoryName)
-
-	if rf, ok := ret.Get(0).(func(string) []dto.PostModel); ok {
-		postDtos = rf(categoryName)
-	} else {
-		postDtos = ret.Get(0).([]dto.PostModel)
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		err = rf(categoryName)
-	} else {
-		err = ret.Error(1)
-	}
-	return
-}
-
-func (_m *IPostService) GetWithSubCategoryQuery(subCategoryName string) (postDtos []dto.PostModel, err error) {
-	ret := _m.Called(subCategoryName)
-
-	if rf, ok := ret.Get(0).(func(string) []dto.PostModel); ok {
-		postDtos = rf(subCategoryName)
-	} else {
-		postDtos = ret.Get(0).([]dto.PostModel)
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		err = rf(subCategoryName)
 	} else {
 		err = ret.Error(1)
 	}

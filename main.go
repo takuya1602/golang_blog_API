@@ -125,7 +125,7 @@ func (e *Env) handleRequestSubCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	switch r.Method {
 	case "GET":
-		err = subCategory.Get(w, r)
+		err = subCategory.GetSubCategories(w, r)
 	case "POST":
 		err = subCategory.Create(w, r)
 	case "PUT":
@@ -149,9 +149,9 @@ func (e *Env) handleRequestPost(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		slug := path.Base(r.URL.Path)
 		if slug == "posts" {
-			err = post.Get(w, r)
+			err = post.GetPosts(w, r)
 		} else {
-			err = post.GetBySlug(w, r, slug)
+			err = post.GetPostBySlug(w, r, slug)
 		}
 
 	case "POST":

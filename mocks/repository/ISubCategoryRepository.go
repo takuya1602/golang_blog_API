@@ -10,11 +10,11 @@ type ISubCategoryRepository struct {
 	mock.Mock
 }
 
-func (_m *ISubCategoryRepository) GetAll() (subCategories []entity.SubCategory, err error) {
-	ret := _m.Called()
+func (_m *ISubCategoryRepository) GetSubCategories(queryParams map[string][]string) (subCategories []entity.SubCategory, err error) {
+	ret := _m.Called(queryParams)
 
-	if rf, ok := ret.Get(0).(func() []entity.SubCategory); ok {
-		subCategories = rf()
+	if rf, ok := ret.Get(0).(func(map[string][]string) []entity.SubCategory); ok {
+		subCategories = rf(queryParams)
 	} else {
 		if ret.Get(0) != nil {
 			subCategories = ret.Get(0).([]entity.SubCategory)
@@ -29,26 +29,7 @@ func (_m *ISubCategoryRepository) GetAll() (subCategories []entity.SubCategory, 
 	return
 }
 
-func (_m *ISubCategoryRepository) GetFilterParentCategory(parentCategoryName string) (subCategories []entity.SubCategory, err error) {
-	ret := _m.Called(parentCategoryName)
-
-	if rf, ok := ret.Get(0).(func(string) []entity.SubCategory); ok {
-		subCategories = rf(parentCategoryName)
-	} else {
-		if ret.Get(0) != nil {
-			subCategories = ret.Get(0).([]entity.SubCategory)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		err = rf(parentCategoryName)
-	} else {
-		err = ret.Error(1)
-	}
-	return
-}
-
-func (_m *ISubCategoryRepository) GetBySlug(slug string) (subCategory entity.SubCategory, err error) {
+func (_m *ISubCategoryRepository) GetSubCategoryBySlug(slug string) (subCategory entity.SubCategory, err error) {
 	ret := _m.Called(slug)
 
 	if rf, ok := ret.Get(0).(func(string) entity.SubCategory); ok {

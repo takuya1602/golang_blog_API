@@ -21,8 +21,6 @@ create table sub_categories (
 
 create table posts (
     id serial primary key,
-    category_id integer references categories(id),
-    sub_category_id integer references sub_categories(id),
     title varchar(255) unique,
     slug varchar(255) unique,
     eye_catching_img varchar(2048),
@@ -30,7 +28,8 @@ create table posts (
     meta_description text,
     is_public boolean,
     created_at timestamp with time zone default current_timestamp not null,
-    updated_at timestamp with time zone default current_timestamp not null
+    updated_at timestamp with time zone default current_timestamp not null,
+    sub_category_id integer references sub_categories(id)
 );
 
 create table users (
