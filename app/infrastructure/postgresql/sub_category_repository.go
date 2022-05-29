@@ -4,6 +4,7 @@ import (
 	"backend/app/domain/entity"
 	"backend/app/domain/repository"
 	"database/sql"
+	"log"
 )
 
 type SubCategoryRepository struct {
@@ -89,6 +90,22 @@ func (r *SubCategoryRepository) Delete(subCategory entity.SubCategory) (err erro
 	_, err = r.Exec("delete from sub_categories where id = $1", subCategory.Id)
 	if err != nil {
 		return
+	}
+	return
+}
+
+func (r *SubCategoryRepository) GetIdFromParentCategoryName(name string) (id int) {
+	err := r.QueryRow("select id from categories where name = $1", name).Scan(&id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func (r *SubCategoryRepository) GetNameFromParentCategoryId(id int) (name string) {
+	err := r.QueryRow("select name from categories where id = $1", id).Scan(&name)
+	if err != nil {
+		log.Fatal(err)
 	}
 	return
 }

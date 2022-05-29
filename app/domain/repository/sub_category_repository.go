@@ -8,4 +8,6 @@ type ISubCategoryRepository interface {
 	Create(entity.SubCategory) error
 	Update(entity.SubCategory) error
 	Delete(entity.SubCategory) error
+	GetIdFromParentCategoryName(string) int
+	GetNameFromParentCategoryId(int) string
 }

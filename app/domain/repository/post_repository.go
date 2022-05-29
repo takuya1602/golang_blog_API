@@ -8,4 +8,8 @@ type IPostRepository interface {
 	Create(entity.Post) error
 	Update(entity.Post) error
 	Delete(entity.Post) error
+	GetIdFromCategoryName(string) int
+	GetNameFromCategoryId(int) string
+	GetIdFromSubCategoryName(string) int
+	GetNameFromSubCategoryId(int) string
 }

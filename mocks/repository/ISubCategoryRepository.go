@@ -74,3 +74,29 @@ func (_m *ISubCategoryRepository) Delete(subCategory entity.SubCategory) (err er
 	}
 	return
 }
+
+func (_m *ISubCategoryRepository) GetIdFromParentCategoryName(name string) (id int) {
+	ret := _m.Called(name)
+
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		id = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			id = ret.Get(0).(int)
+		}
+	}
+	return
+}
+
+func (_m *ISubCategoryRepository) GetNameFromParentCategoryId(id int) (name string) {
+	ret := _m.Called(id)
+
+	if rf, ok := ret.Get(0).(func(int) string); ok {
+		name = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			name = ret.Get(0).(string)
+		}
+	}
+	return
+}
