@@ -16,16 +16,16 @@ func TestSubCategoryHandler_Get(t *testing.T) {
 		func(t *testing.T) {
 			subCategoryDtos := []dto.SubCategoryModel{
 				{
-					Id:               1,
-					Name:             "testSubCategory1",
-					Slug:             "test-sub-category-1",
-					ParentCategoryId: 1,
+					Id:                 1,
+					Name:               "testSubCategory1",
+					Slug:               "test-sub-category-1",
+					ParentCategoryName: "testCategory1",
 				},
 				{
-					Id:               2,
-					Name:             "testSubCategory2",
-					Slug:             "test-sub-category-2",
-					ParentCategoryId: 1,
+					Id:                 2,
+					Name:               "testSubCategory2",
+					Slug:               "test-sub-category-2",
+					ParentCategoryName: "testCategory1",
 				},
 			}
 			categorySlug := "test-category-1"
@@ -50,16 +50,16 @@ func TestSubCategoryHandler_Get(t *testing.T) {
 		func(t *testing.T) {
 			subCategoryDtos := []dto.SubCategoryModel{
 				{
-					Id:               1,
-					Name:             "testSubCategory1",
-					Slug:             "test-sub-category-1",
-					ParentCategoryId: 1,
+					Id:                 1,
+					Name:               "testSubCategory1",
+					Slug:               "test-sub-category-1",
+					ParentCategoryName: "testCategory1",
 				},
 				{
-					Id:               2,
-					Name:             "testSubCategory2",
-					Slug:             "test-sub-category-2",
-					ParentCategoryId: 1,
+					Id:                 2,
+					Name:               "testSubCategory2",
+					Slug:               "test-sub-category-2",
+					ParentCategoryName: "testCategory1",
 				},
 			}
 			s := new(mocks.ISubCategoryService)
@@ -80,12 +80,12 @@ func TestSubCategoryHandler_Get(t *testing.T) {
 }
 
 func TestSubCategoryHandler_Create(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", 1)
+	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", "testCategory1")
 	json := strings.NewReader(`{
 		"id": 1,
 		"name": "testSubCategory1",
 		"slug": "test-sub-category-1",
-		"parent_category_id": 1
+		"parent_category": "testCategory1"
 	}`)
 
 	w := httptest.NewRecorder()
@@ -104,12 +104,12 @@ func TestSubCategoryHandler_Create(t *testing.T) {
 }
 
 func TestSubCategoryHandler_Update(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", 1)
+	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", "testCategory1")
 	json := strings.NewReader(`{
 		"id": 1,
 		"name": "testSubCategory1",
 		"slug": "test-sub-category-1",
-		"parent_category_id": 1
+		"parent_category": "testCategory1"
 	}`)
 
 	w := httptest.NewRecorder()
@@ -129,7 +129,7 @@ func TestSubCategoryHandler_Update(t *testing.T) {
 }
 
 func TestSubCategoryHandler_Delete(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", 1)
+	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", "testCategory1")
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("DELETE", "/sub-categories/test-sub-category-1/", nil)

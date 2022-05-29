@@ -20,8 +20,8 @@ func TestPostHandler_Get(t *testing.T) {
 			postDtos := []dto.PostModel{
 				{
 					Id:              1,
-					CategoryId:      1,
-					SubCategoryId:   1,
+					CategoryName:    "testCategory1",
+					SubCategoryName: "testSubCategory1",
 					Title:           "testPost1",
 					Slug:            "test-post-1",
 					EyeCatchingImg:  "test_post_1.png",
@@ -33,8 +33,8 @@ func TestPostHandler_Get(t *testing.T) {
 				},
 				{
 					Id:              2,
-					CategoryId:      1,
-					SubCategoryId:   2,
+					CategoryName:    "testCategory1",
+					SubCategoryName: "testSubCategory2",
 					Title:           "testPost2",
 					Slug:            "test-post-2",
 					EyeCatchingImg:  "test_post_2.png",
@@ -70,8 +70,8 @@ func TestPostHandler_Get(t *testing.T) {
 			postDtos := []dto.PostModel{
 				{
 					Id:              1,
-					CategoryId:      1,
-					SubCategoryId:   1,
+					CategoryName:    "testCategory1",
+					SubCategoryName: "testSubCategory1",
 					Title:           "testPost1",
 					Slug:            "test-post-1",
 					EyeCatchingImg:  "test_post_1.png",
@@ -83,8 +83,8 @@ func TestPostHandler_Get(t *testing.T) {
 				},
 				{
 					Id:              2,
-					CategoryId:      2,
-					SubCategoryId:   1,
+					CategoryName:    "testCategory2",
+					SubCategoryName: "testSubCategory1",
 					Title:           "testPost2",
 					Slug:            "test-post-2",
 					EyeCatchingImg:  "test_post_2.png",
@@ -120,8 +120,8 @@ func TestPostHandler_Get(t *testing.T) {
 			postDtos := []dto.PostModel{
 				{
 					Id:              1,
-					CategoryId:      1,
-					SubCategoryId:   1,
+					CategoryName:    "testCategory1",
+					SubCategoryName: "testSubCategory1",
 					Title:           "testPost1",
 					Slug:            "test-post-1",
 					EyeCatchingImg:  "test_post_1.png",
@@ -133,8 +133,8 @@ func TestPostHandler_Get(t *testing.T) {
 				},
 				{
 					Id:              2,
-					CategoryId:      2,
-					SubCategoryId:   2,
+					CategoryName:    "testCategory1",
+					SubCategoryName: "testSubCategory2",
 					Title:           "testPost2",
 					Slug:            "test-post-2",
 					EyeCatchingImg:  "test_post_2.png",
@@ -166,8 +166,8 @@ func TestPostHandler_Get(t *testing.T) {
 func TestPostHandler_GetBySlug(t *testing.T) {
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",
@@ -194,8 +194,8 @@ func TestPostHandler_GetBySlug(t *testing.T) {
 func TestPostHandler_Create(t *testing.T) {
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",
@@ -205,8 +205,8 @@ func TestPostHandler_Create(t *testing.T) {
 	}
 	json := strings.NewReader(`{
 		"id": 1,
-		"category_id": 1,
-		"sub_category_id": 1,
+		"category": "testCategory1",
+		"sub_category": "testSubCategory1",
 		"title": "testPost1",
 		"slug": "test-post-1",
 		"eye_catching_img": "test_post_1.png",
@@ -233,8 +233,8 @@ func TestPostHandler_Create(t *testing.T) {
 func TestPostHandler_Update(t *testing.T) {
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",
@@ -244,8 +244,8 @@ func TestPostHandler_Update(t *testing.T) {
 	}
 	json := strings.NewReader(`{
 		"id": 1,
-		"category_id": 1,
-		"sub_category_id": 1,
+		"category": "testCategory1",
+		"sub_category": "testSubCategory1",
 		"title": "testPost1",
 		"slug": "test-post-1",
 		"eye_catching_img": "test_post_1.png",
@@ -273,8 +273,8 @@ func TestPostHandler_Update(t *testing.T) {
 func TestPostHandler_Delete(t *testing.T) {
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",

@@ -118,3 +118,55 @@ func (_m *IPostRepository) Delete(post entity.Post) (err error) {
 	}
 	return
 }
+
+func (_m *IPostRepository) GetIdFromCategoryName(name string) (id int) {
+	ret := _m.Called(name)
+
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		id = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			id = ret.Get(0).(int)
+		}
+	}
+	return
+}
+
+func (_m *IPostRepository) GetNameFromCategoryId(id int) (name string) {
+	ret := _m.Called(id)
+
+	if rf, ok := ret.Get(0).(func(int) string); ok {
+		name = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			name = ret.Get(0).(string)
+		}
+	}
+	return
+}
+
+func (_m *IPostRepository) GetIdFromSubCategoryName(name string) (id int) {
+	ret := _m.Called(name)
+
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		id = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			id = ret.Get(0).(int)
+		}
+	}
+	return
+}
+
+func (_m *IPostRepository) GetNameFromSubCategoryId(id int) (name string) {
+	ret := _m.Called(id)
+
+	if rf, ok := ret.Get(0).(func(int) string); ok {
+		name = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			name = ret.Get(0).(string)
+		}
+	}
+	return
+}

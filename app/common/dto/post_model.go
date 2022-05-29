@@ -4,8 +4,8 @@ import "time"
 
 type PostModel struct {
 	Id              int       `json:"id"`
-	CategoryId      int       `json:"category_id"`
-	SubCategoryId   int       `json:"sub_category_id"`
+	CategoryName    string    `json:"category"`
+	SubCategoryName string    `json:"sub_category"`
 	Title           string    `json:"title"`
 	Slug            string    `json:"slug"`
 	EyeCatchingImg  string    `json:"eye_catching_img"`
@@ -16,11 +16,11 @@ type PostModel struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-func NewPostModel(id int, categoryId int, subCategoryId int, title string, slug string, eyeCatchingImg string, content string, metaDescription string, isPublic bool, createdAt time.Time, updatedAt time.Time) (postModel PostModel) {
+func NewPostModel(id int, categoryName string, subCategoryName string, title string, slug string, eyeCatchingImg string, content string, metaDescription string, isPublic bool, createdAt time.Time, updatedAt time.Time) (postModel PostModel) {
 	postModel = PostModel{
 		Id:              id,
-		CategoryId:      categoryId,
-		SubCategoryId:   subCategoryId,
+		CategoryName:    categoryName,
+		SubCategoryName: subCategoryName,
 		Title:           title,
 		Slug:            slug,
 		EyeCatchingImg:  eyeCatchingImg,

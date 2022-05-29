@@ -42,10 +42,42 @@ func TestPostService_GetAll(t *testing.T) {
 			UpdatedAt:       postUpdatedAt,
 		},
 	}
+	postDtos := []dto.PostModel{
+		{
+			Id:              1,
+			CategoryName:    "testCategory1",
+			SubCategoryName: "testSubCategory1",
+			Title:           "testPost1",
+			Slug:            "test-post-1",
+			EyeCatchingImg:  "test_post_1.png",
+			Content:         "This is 1st post",
+			MetaDescription: "This is 1st post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+		{
+			Id:              2,
+			CategoryName:    "testCategory2",
+			SubCategoryName: "testSubCategory2",
+			Title:           "testPost2",
+			Slug:            "test-post-2",
+			EyeCatchingImg:  "test_post_2.png",
+			Content:         "This is 2nd post",
+			MetaDescription: "This is 2nd post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+	}
 
 	r := new(mocks.IPostRepository)
 
 	r.On("GetAll").Return(posts, nil)
+	r.On("GetNameFromCategoryId", posts[0].CategoryId).Return(postDtos[0].CategoryName)
+	r.On("GetNameFromCategoryId", posts[1].CategoryId).Return(postDtos[1].CategoryName)
+	r.On("GetNameFromSubCategoryId", posts[0].SubCategoryId).Return(postDtos[0].SubCategoryName)
+	r.On("GetNameFromSubCategoryId", posts[1].SubCategoryId).Return(postDtos[1].SubCategoryName)
 
 	s := NewPostService(r)
 
@@ -54,8 +86,8 @@ func TestPostService_GetAll(t *testing.T) {
 	assert.NoError(t, err)
 	for i, r := range ret {
 		assert.Equal(t, r.Id, posts[i].Id)
-		assert.Equal(t, r.CategoryId, posts[i].CategoryId)
-		assert.Equal(t, r.SubCategoryId, posts[i].SubCategoryId)
+		assert.Equal(t, r.CategoryName, postDtos[i].CategoryName)
+		assert.Equal(t, r.SubCategoryName, postDtos[i].SubCategoryName)
 		assert.Equal(t, r.Title, posts[i].Title)
 		assert.Equal(t, r.Slug, posts[i].Slug)
 		assert.Equal(t, r.EyeCatchingImg, posts[i].EyeCatchingImg)
@@ -100,11 +132,45 @@ func TestPostService_GetWithCategoryQuery(t *testing.T) {
 			UpdatedAt:       postUpdatedAt,
 		},
 	}
+
+	postDtos := []dto.PostModel{
+		{
+			Id:              1,
+			CategoryName:    "testCategory1",
+			SubCategoryName: "testSubCategory1",
+			Title:           "testPost1",
+			Slug:            "test-post-1",
+			EyeCatchingImg:  "test_post_1.png",
+			Content:         "This is 1st post",
+			MetaDescription: "This is 1st post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+		{
+			Id:              2,
+			CategoryName:    "testCategory1",
+			SubCategoryName: "testSubCategory2",
+			Title:           "testPost2",
+			Slug:            "test-post-2",
+			EyeCatchingImg:  "test_post_2.png",
+			Content:         "This is 2nd post",
+			MetaDescription: "This is 2nd post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+	}
+
 	categoryName := "testCategory1"
 
 	r := new(mocks.IPostRepository)
 
 	r.On("GetFilterCategory", categoryName).Return(posts, nil)
+	r.On("GetNameFromCategoryId", posts[0].CategoryId).Return(postDtos[0].CategoryName)
+	r.On("GetNameFromCategoryId", posts[1].CategoryId).Return(postDtos[1].CategoryName)
+	r.On("GetNameFromSubCategoryId", posts[0].SubCategoryId).Return(postDtos[0].SubCategoryName)
+	r.On("GetNameFromSubCategoryId", posts[1].SubCategoryId).Return(postDtos[1].SubCategoryName)
 
 	s := NewPostService(r)
 
@@ -113,8 +179,8 @@ func TestPostService_GetWithCategoryQuery(t *testing.T) {
 	assert.NoError(t, err)
 	for i, r := range ret {
 		assert.Equal(t, r.Id, posts[i].Id)
-		assert.Equal(t, r.CategoryId, posts[i].CategoryId)
-		assert.Equal(t, r.SubCategoryId, posts[i].SubCategoryId)
+		assert.Equal(t, r.CategoryName, postDtos[i].CategoryName)
+		assert.Equal(t, r.SubCategoryName, postDtos[i].SubCategoryName)
 		assert.Equal(t, r.Title, posts[i].Title)
 		assert.Equal(t, r.Slug, posts[i].Slug)
 		assert.Equal(t, r.EyeCatchingImg, posts[i].EyeCatchingImg)
@@ -147,8 +213,37 @@ func TestPostService_GetWithSubCategoryQuery(t *testing.T) {
 		},
 		{
 			Id:              2,
-			CategoryId:      1,
-			SubCategoryId:   2,
+			CategoryId:      2,
+			SubCategoryId:   1,
+			Title:           "testPost2",
+			Slug:            "test-post-2",
+			EyeCatchingImg:  "test_post_2.png",
+			Content:         "This is 2nd post",
+			MetaDescription: "This is 2nd post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+	}
+
+	postDtos := []dto.PostModel{
+		{
+			Id:              1,
+			CategoryName:    "testCategory1",
+			SubCategoryName: "testSubCategory1",
+			Title:           "testPost1",
+			Slug:            "test-post-1",
+			EyeCatchingImg:  "test_post_1.png",
+			Content:         "This is 1st post",
+			MetaDescription: "This is 1st post",
+			IsPublic:        false,
+			CreatedAt:       postCreatedAt,
+			UpdatedAt:       postUpdatedAt,
+		},
+		{
+			Id:              2,
+			CategoryName:    "testCategory2",
+			SubCategoryName: "testSubCategory1",
 			Title:           "testPost2",
 			Slug:            "test-post-2",
 			EyeCatchingImg:  "test_post_2.png",
@@ -165,6 +260,10 @@ func TestPostService_GetWithSubCategoryQuery(t *testing.T) {
 	r := new(mocks.IPostRepository)
 
 	r.On("GetFilterSubCategory", subCategoryName).Return(posts, nil)
+	r.On("GetNameFromCategoryId", posts[0].CategoryId).Return(postDtos[0].CategoryName)
+	r.On("GetNameFromCategoryId", posts[1].CategoryId).Return(postDtos[1].CategoryName)
+	r.On("GetNameFromSubCategoryId", posts[0].SubCategoryId).Return(postDtos[0].SubCategoryName)
+	r.On("GetNameFromSubCategoryId", posts[1].SubCategoryId).Return(postDtos[1].SubCategoryName)
 
 	s := NewPostService(r)
 
@@ -173,8 +272,8 @@ func TestPostService_GetWithSubCategoryQuery(t *testing.T) {
 	assert.NoError(t, err)
 	for i, r := range ret {
 		assert.Equal(t, r.Id, posts[i].Id)
-		assert.Equal(t, r.CategoryId, posts[i].CategoryId)
-		assert.Equal(t, r.SubCategoryId, posts[i].SubCategoryId)
+		assert.Equal(t, r.CategoryName, postDtos[i].CategoryName)
+		assert.Equal(t, r.SubCategoryName, postDtos[i].SubCategoryName)
 		assert.Equal(t, r.Title, posts[i].Title)
 		assert.Equal(t, r.Slug, posts[i].Slug)
 		assert.Equal(t, r.EyeCatchingImg, posts[i].EyeCatchingImg)
@@ -205,11 +304,27 @@ func TestPostService_GetBySlug(t *testing.T) {
 		UpdatedAt:       postUpdatedAt,
 	}
 
+	postDto := dto.PostModel{
+		Id:              1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
+		Title:           "testPost1",
+		Slug:            "test-post-1",
+		EyeCatchingImg:  "test_post_1.png",
+		Content:         "This is 1st post",
+		MetaDescription: "This is 1st post",
+		IsPublic:        false,
+		CreatedAt:       postCreatedAt,
+		UpdatedAt:       postUpdatedAt,
+	}
+
 	slug := "test-post-1"
 
 	r := new(mocks.IPostRepository)
 
 	r.On("GetBySlug", slug).Return(post, nil)
+	r.On("GetNameFromCategoryId", post.CategoryId).Return(postDto.CategoryName)
+	r.On("GetNameFromSubCategoryId", post.SubCategoryId).Return(postDto.SubCategoryName)
 
 	s := NewPostService(r)
 
@@ -217,8 +332,8 @@ func TestPostService_GetBySlug(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, ret.Id, post.Id)
-	assert.Equal(t, ret.CategoryId, post.CategoryId)
-	assert.Equal(t, ret.SubCategoryId, post.SubCategoryId)
+	assert.Equal(t, ret.CategoryName, postDto.CategoryName)
+	assert.Equal(t, ret.SubCategoryName, postDto.SubCategoryName)
 	assert.Equal(t, ret.Title, post.Title)
 	assert.Equal(t, ret.Slug, post.Slug)
 	assert.Equal(t, ret.EyeCatchingImg, post.EyeCatchingImg)
@@ -236,8 +351,8 @@ func TestPostService_Create(t *testing.T) {
 
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "subCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",
@@ -264,6 +379,8 @@ func TestPostService_Create(t *testing.T) {
 	r := new(mocks.IPostRepository)
 
 	r.On("Create", post).Return(nil)
+	r.On("GetIdFromCategoryName", postDto.CategoryName).Return(post.CategoryId)
+	r.On("GetIdFromSubCategoryName", postDto.SubCategoryName).Return(post.SubCategoryId)
 
 	s := NewPostService(r)
 
@@ -279,8 +396,8 @@ func TestPostService_Update(t *testing.T) {
 
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",
@@ -307,6 +424,8 @@ func TestPostService_Update(t *testing.T) {
 	r := new(mocks.IPostRepository)
 
 	r.On("Update", post).Return(nil)
+	r.On("GetIdFromCategoryName", postDto.CategoryName).Return(post.CategoryId)
+	r.On("GetIdFromSubCategoryName", postDto.SubCategoryName).Return(post.SubCategoryId)
 
 	s := NewPostService(r)
 
@@ -322,8 +441,8 @@ func TestPostService_Delete(t *testing.T) {
 
 	postDto := dto.PostModel{
 		Id:              1,
-		CategoryId:      1,
-		SubCategoryId:   1,
+		CategoryName:    "testCategory1",
+		SubCategoryName: "testSubCategory1",
 		Title:           "testPost1",
 		Slug:            "test-post-1",
 		EyeCatchingImg:  "test_post_1.png",
@@ -350,6 +469,8 @@ func TestPostService_Delete(t *testing.T) {
 	r := new(mocks.IPostRepository)
 
 	r.On("Delete", post).Return(nil)
+	r.On("GetIdFromCategoryName", postDto.CategoryName).Return(post.CategoryId)
+	r.On("GetIdFromSubCategoryName", postDto.SubCategoryName).Return(post.SubCategoryId)
 
 	s := NewPostService(r)
 

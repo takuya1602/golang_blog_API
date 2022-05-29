@@ -59,7 +59,7 @@ func main() {
 
 func (e *Env) checkPermissionFromToken(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" || r.Method == "OPTIONS" {
+		if r.Method == "OPTIONS" || r.Method == "GET" {
 			h(w, r)
 		} else {
 			user := di.InitUser(e.Db)
@@ -82,6 +82,10 @@ func (e *Env) handleRequestAdmin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	if r.Method == "OPTION" {
+		w.WriteHeader(200)
+		return
+	}
 	if r.Method == "POST" {
 		err = user.IssueToken(w, r)
 	} else {

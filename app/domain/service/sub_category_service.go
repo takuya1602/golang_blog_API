@@ -25,26 +25,30 @@ func NewSubCategoryService(repo repository.ISubCategoryRepository) (subCategoryS
 }
 
 func (s *SubCategoryService) convertToDtoFromEntity(subCategory entity.SubCategory) (subCategoryDto dto.SubCategoryModel) {
-	subCategoryDto = dto.NewSubCategoryModel(subCategory.Id, subCategory.Name, subCategory.Slug, subCategory.ParentCategoryId)
+	parentCategoryName := s.ISubCategoryRepository.GetNameFromParentCategoryId(subCategory.ParentCategoryId)
+	subCategoryDto = dto.NewSubCategoryModel(subCategory.Id, subCategory.Name, subCategory.Slug, parentCategoryName)
 	return
 }
 
 func (s *SubCategoryService) convertToDtosFromEntities(subCategories []entity.SubCategory) (subCategoryDtos []dto.SubCategoryModel) {
 	for _, subCategory := range subCategories {
-		subCategoryDto := dto.NewSubCategoryModel(subCategory.Id, subCategory.Name, subCategory.Slug, subCategory.ParentCategoryId)
+		parentCategoryName := s.ISubCategoryRepository.GetNameFromParentCategoryId(subCategory.ParentCategoryId)
+		subCategoryDto := dto.NewSubCategoryModel(subCategory.Id, subCategory.Name, subCategory.Slug, parentCategoryName)
 		subCategoryDtos = append(subCategoryDtos, subCategoryDto)
 	}
 	return
 }
 
 func (s *SubCategoryService) convertToEntityFromDto(subCategoryDto dto.SubCategoryModel) (subCategory entity.SubCategory) {
-	subCategory = entity.NewSubCategory(subCategoryDto.Id, subCategoryDto.Name, subCategoryDto.Slug, subCategoryDto.ParentCategoryId)
+	parentCategoryId := s.ISubCategoryRepository.GetIdFromParentCategoryName(subCategoryDto.ParentCategoryName)
+	subCategory = entity.NewSubCategory(subCategoryDto.Id, subCategoryDto.Name, subCategoryDto.Slug, parentCategoryId)
 	return
 }
 
 func (s *SubCategoryService) convertToEntitiesFromDtos(subCategoryDtos []dto.SubCategoryModel) (subCategories []entity.SubCategory) {
 	for _, subCategoryDto := range subCategoryDtos {
-		subCategory := entity.NewSubCategory(subCategoryDto.Id, subCategoryDto.Name, subCategoryDto.Slug, subCategoryDto.ParentCategoryId)
+		parentCategoryId := s.ISubCategoryRepository.GetIdFromParentCategoryName(subCategoryDto.ParentCategoryName)
+		subCategory := entity.NewSubCategory(subCategoryDto.Id, subCategoryDto.Name, subCategoryDto.Slug, parentCategoryId)
 		subCategories = append(subCategories, subCategory)
 	}
 	return

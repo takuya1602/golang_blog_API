@@ -26,26 +26,34 @@ func NewPostService(repo repository.IPostRepository) (postService IPostService) 
 }
 
 func (s *PostService) convertToDtoFromEntity(post entity.Post) (postDto dto.PostModel) {
-	postDto = dto.NewPostModel(post.Id, post.CategoryId, post.SubCategoryId, post.Title, post.Slug, post.EyeCatchingImg, post.Content, post.MetaDescription, post.IsPublic, post.CreatedAt, post.UpdatedAt)
+	categoryName := s.IPostRepository.GetNameFromCategoryId(post.CategoryId)
+	subCategoryName := s.IPostRepository.GetNameFromSubCategoryId(post.SubCategoryId)
+	postDto = dto.NewPostModel(post.Id, categoryName, subCategoryName, post.Title, post.Slug, post.EyeCatchingImg, post.Content, post.MetaDescription, post.IsPublic, post.CreatedAt, post.UpdatedAt)
 	return
 }
 
 func (s *PostService) convertToDtosFromEntities(posts []entity.Post) (postDtos []dto.PostModel) {
 	for _, post := range posts {
-		postDto := dto.NewPostModel(post.Id, post.CategoryId, post.SubCategoryId, post.Title, post.Slug, post.EyeCatchingImg, post.Content, post.MetaDescription, post.IsPublic, post.CreatedAt, post.UpdatedAt)
+		categoryName := s.IPostRepository.GetNameFromCategoryId(post.CategoryId)
+		subCategoryName := s.IPostRepository.GetNameFromSubCategoryId(post.SubCategoryId)
+		postDto := dto.NewPostModel(post.Id, categoryName, subCategoryName, post.Title, post.Slug, post.EyeCatchingImg, post.Content, post.MetaDescription, post.IsPublic, post.CreatedAt, post.UpdatedAt)
 		postDtos = append(postDtos, postDto)
 	}
 	return
 }
 
 func (s *PostService) convertToEntityFromDto(postDto dto.PostModel) (post entity.Post) {
-	post = entity.NewPost(postDto.Id, postDto.CategoryId, postDto.SubCategoryId, postDto.Title, postDto.Slug, postDto.EyeCatchingImg, postDto.Content, postDto.MetaDescription, postDto.IsPublic, postDto.CreatedAt, postDto.UpdatedAt)
+	categoryId := s.IPostRepository.GetIdFromCategoryName(postDto.CategoryName)
+	subCategoryId := s.IPostRepository.GetIdFromSubCategoryName(postDto.SubCategoryName)
+	post = entity.NewPost(postDto.Id, categoryId, subCategoryId, postDto.Title, postDto.Slug, postDto.EyeCatchingImg, postDto.Content, postDto.MetaDescription, postDto.IsPublic, postDto.CreatedAt, postDto.UpdatedAt)
 	return
 }
 
 func (s *PostService) convertEntitiesFromDtos(postDtos []dto.PostModel) (posts []entity.Post) {
 	for _, postDto := range postDtos {
-		post := entity.NewPost(postDto.Id, postDto.CategoryId, postDto.SubCategoryId, postDto.Title, postDto.Slug, postDto.EyeCatchingImg, postDto.Content, postDto.MetaDescription, postDto.IsPublic, postDto.CreatedAt, postDto.UpdatedAt)
+		categoryId := s.IPostRepository.GetIdFromCategoryName(postDto.CategoryName)
+		subCategoryId := s.IPostRepository.GetIdFromSubCategoryName(postDto.SubCategoryName)
+		post := entity.NewPost(postDto.Id, categoryId, subCategoryId, postDto.Title, postDto.Slug, postDto.EyeCatchingImg, postDto.Content, postDto.MetaDescription, postDto.IsPublic, postDto.CreatedAt, postDto.UpdatedAt)
 		posts = append(posts, post)
 	}
 	return
