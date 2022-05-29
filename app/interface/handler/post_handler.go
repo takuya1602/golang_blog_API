@@ -9,8 +9,8 @@ import (
 )
 
 type IPostHandler interface {
-	Get(w http.ResponseWriter, r *http.Request) (err error)
-	GetBySlug(w http.ResponseWriter, r *http.Request, slug string) (err error)
+	GetPosts(w http.ResponseWriter, r *http.Request) (err error)
+	GetPostBySlug(w http.ResponseWriter, r *http.Request, slug string) (err error)
 	Create(w http.ResponseWriter, r *http.Request) (err error)
 	Update(w http.ResponseWriter, r *http.Request) (err error)
 	Delete(w http.ResponseWriter, r *http.Request) (err error)
@@ -25,26 +25,11 @@ func NewPostHandler(srv service.IPostService) (iPostHandler IPostHandler) {
 	return
 }
 
-func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) (err error) {
-	var postDtos []dto.PostModel
+func (h *PostHandler) GetPosts(w http.ResponseWriter, r *http.Request) (err error) {
 	queryParams := r.URL.Query()
-	if categorySlugs, ok := queryParams["category-name"]; ok {
-		categorySlug := categorySlugs[0]
-		postDtos, err = h.IPostService.GetWithCategoryQuery(categorySlug)
-		if err != nil {
-			return
-		}
-	} else if subCategorySlugs, ok := queryParams["sub-category-name"]; ok {
-		subCategorySlug := subCategorySlugs[0]
-		postDtos, err = h.IPostService.GetWithSubCategoryQuery(subCategorySlug)
-		if err != nil {
-			return
-		}
-	} else {
-		postDtos, err = h.IPostService.GetAll()
-		if err != nil {
-			return
-		}
+	postDtos, err := h.IPostService.GetPosts(queryParams)
+	if err != nil {
+		return
 	}
 	output, err := json.MarshalIndent(&postDtos, "", "\t")
 	if err != nil {
@@ -55,8 +40,8 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) (err error) {
 	return
 }
 
-func (h *PostHandler) GetBySlug(w http.ResponseWriter, r *http.Request, slug string) (err error) {
-	postDto, err := h.IPostService.GetBySlug(slug)
+func (h *PostHandler) GetPostBySlug(w http.ResponseWriter, r *http.Request, slug string) (err error) {
+	postDto, err := h.IPostService.GetPostBySlug(slug)
 	if err != nil {
 		return
 	}
@@ -81,7 +66,7 @@ func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) (err error)
 
 func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) (err error) {
 	slug := path.Base(r.URL.Path)
-	postDto, err := h.IPostService.GetBySlug(slug)
+	postDto, err := h.IPostService.GetPostBySlug(slug)
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
@@ -92,7 +77,7 @@ func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) (err error)
 
 func (h *PostHandler) Delete(w http.ResponseWriter, r *http.Request) (err error) {
 	slug := path.Base(r.URL.Path)
-	postDto, err := h.IPostService.GetBySlug(slug)
+	postDto, err := h.IPostService.GetPostBySlug(slug)
 	err = h.IPostService.Delete(postDto)
 	return
 }

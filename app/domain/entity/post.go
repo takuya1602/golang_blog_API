@@ -4,8 +4,6 @@ import "time"
 
 type Post struct {
 	Id              int
-	CategoryId      int
-	SubCategoryId   int
 	Title           string
 	Slug            string
 	EyeCatchingImg  string
@@ -14,6 +12,12 @@ type Post struct {
 	IsPublic        bool
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	CategoryId      int
+	CategoryName    string
+	CategorySlug    string
+	SubCategoryId   int
+	SubCategoryName string
+	SubCategorySlug string
 }
 
 func NewPost(id int, categoryId int, subCategoryId int, title string, slug string, eyeCatchingImg string, content string, metaDescription string, isPublic bool, createdAt time.Time, updatedAt time.Time) (post Post) {

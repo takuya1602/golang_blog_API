@@ -10,11 +10,11 @@ type IPostRepository struct {
 	mock.Mock
 }
 
-func (_m *IPostRepository) GetAll() (posts []entity.Post, err error) {
-	ret := _m.Called()
+func (_m *IPostRepository) GetPosts(queryParams map[string][]string) (posts []entity.Post, err error) {
+	ret := _m.Called(queryParams)
 
-	if rf, ok := ret.Get(0).(func() []entity.Post); ok {
-		posts = rf()
+	if rf, ok := ret.Get(0).(func(map[string][]string) []entity.Post); ok {
+		posts = rf(queryParams)
 	} else {
 		if ret.Get(0) != nil {
 			posts = ret.Get(0).([]entity.Post)
@@ -29,7 +29,7 @@ func (_m *IPostRepository) GetAll() (posts []entity.Post, err error) {
 	return
 }
 
-func (_m *IPostRepository) GetBySlug(slug string) (post entity.Post, err error) {
+func (_m *IPostRepository) GetPostBySlug(slug string) (post entity.Post, err error) {
 	ret := _m.Called(slug)
 
 	if rf, ok := ret.Get(0).(func(string) entity.Post); ok {
@@ -42,44 +42,6 @@ func (_m *IPostRepository) GetBySlug(slug string) (post entity.Post, err error) 
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		err = rf(slug)
-	} else {
-		err = ret.Error(1)
-	}
-	return
-}
-
-func (_m *IPostRepository) GetFilterCategory(categoryName string) (posts []entity.Post, err error) {
-	ret := _m.Called(categoryName)
-
-	if rf, ok := ret.Get(0).(func(string) []entity.Post); ok {
-		posts = rf(categoryName)
-	} else {
-		if ret.Get(0) != nil {
-			posts = ret.Get(0).([]entity.Post)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		err = rf(categoryName)
-	} else {
-		err = ret.Error(1)
-	}
-	return
-}
-
-func (_m *IPostRepository) GetFilterSubCategory(subCategoryName string) (posts []entity.Post, err error) {
-	ret := _m.Called(subCategoryName)
-
-	if rf, ok := ret.Get(0).(func(string) []entity.Post); ok {
-		posts = rf(subCategoryName)
-	} else {
-		if ret.Get(0) != nil {
-			posts = ret.Get(0).([]entity.Post)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		err = rf(subCategoryName)
 	} else {
 		err = ret.Error(1)
 	}

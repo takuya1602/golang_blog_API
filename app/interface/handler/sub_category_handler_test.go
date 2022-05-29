@@ -10,36 +10,45 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSubCategoryHandler_Get(t *testing.T) {
+func TestSubCategoryHandler_GetSubCategories(t *testing.T) {
+	subCategoryDtos := []dto.SubCategoryModel{
+		{
+			Id:                 1,
+			Name:               "testSubCategory1",
+			Slug:               "test-sub-category-1",
+			ParentCategoryId:   1,
+			ParentCategoryName: "testCategory1",
+			ParentCategorySlug: "test-category-1",
+		},
+		{
+			Id:                 2,
+			Name:               "testSubCategory2",
+			Slug:               "test-sub-category-2",
+			ParentCategoryId:   1,
+			ParentCategoryName: "testCategory1",
+			ParentCategorySlug: "test-category-1",
+		},
+	}
+
 	t.Run(
 		"with query param: category-name",
 		func(t *testing.T) {
-			subCategoryDtos := []dto.SubCategoryModel{
-				{
-					Id:                 1,
-					Name:               "testSubCategory1",
-					Slug:               "test-sub-category-1",
-					ParentCategoryName: "testCategory1",
-				},
-				{
-					Id:                 2,
-					Name:               "testSubCategory2",
-					Slug:               "test-sub-category-2",
-					ParentCategoryName: "testCategory1",
-				},
-			}
-			categorySlug := "test-category-1"
-
 			s := new(mocks.ISubCategoryService)
 
-			s.On("GetWithQuery", categorySlug).Return(subCategoryDtos, nil)
+			queryParams := map[string][]string{
+				"category-name": {
+					subCategoryDtos[0].ParentCategorySlug,
+				},
+			}
+
+			s.On("GetSubCategories", queryParams).Return(subCategoryDtos, nil)
 
 			h := NewSubCategoryHandler(s)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/sub-categories?category-name=test-category-1", nil)
 
-			err := h.Get(w, r)
+			err := h.GetSubCategories(w, r)
 
 			assert.NoError(t, err)
 			s.AssertExpectations(t)
@@ -48,30 +57,18 @@ func TestSubCategoryHandler_Get(t *testing.T) {
 	t.Run(
 		"without query param",
 		func(t *testing.T) {
-			subCategoryDtos := []dto.SubCategoryModel{
-				{
-					Id:                 1,
-					Name:               "testSubCategory1",
-					Slug:               "test-sub-category-1",
-					ParentCategoryName: "testCategory1",
-				},
-				{
-					Id:                 2,
-					Name:               "testSubCategory2",
-					Slug:               "test-sub-category-2",
-					ParentCategoryName: "testCategory1",
-				},
-			}
 			s := new(mocks.ISubCategoryService)
 
-			s.On("GetAll").Return(subCategoryDtos, nil)
+			queryParams := map[string][]string{}
+
+			s.On("GetSubCategories", queryParams).Return(subCategoryDtos, nil)
 
 			h := NewSubCategoryHandler(s)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/sub-categories/", nil)
 
-			err := h.Get(w, r)
+			err := h.GetSubCategories(w, r)
 
 			assert.NoError(t, err)
 			s.AssertExpectations(t)
@@ -79,70 +76,80 @@ func TestSubCategoryHandler_Get(t *testing.T) {
 	)
 }
 
-func TestSubCategoryHandler_Create(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", "testCategory1")
+func TestSubCategoryHandler_CRUD(t *testing.T) {
+	// Create, Update, Delete
+	// allow (parent_category_name, parent_category_slug)
+	// empty, because "sub_categories" table in postgresSQL database dont't have these fields.
+	subCategoryDto := dto.SubCategoryModel{
+		Id:               1,
+		Name:             "testSubCategory1",
+		Slug:             "test-sub-category-1",
+		ParentCategoryId: 1,
+	}
+
 	json := strings.NewReader(`{
 		"id": 1,
 		"name": "testSubCategory1",
 		"slug": "test-sub-category-1",
-		"parent_category": "testCategory1"
+		"parent_category_id": 1
 	}`)
 
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("POST", "/sub-categories/", json)
+	t.Run(
+		"Create",
+		func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/sub-categories/", json)
 
-	s := new(mocks.ISubCategoryService)
+			s := new(mocks.ISubCategoryService)
 
-	s.On("Create", subCategoryDto).Return(nil)
+			s.On("Create", subCategoryDto).Return(nil)
 
-	h := NewSubCategoryHandler(s)
+			h := NewSubCategoryHandler(s)
 
-	err := h.Create(w, r)
+			err := h.Create(w, r)
 
-	assert.NoError(t, err)
-	s.AssertExpectations(t)
-}
+			assert.NoError(t, err)
+			s.AssertExpectations(t)
+		},
+	)
 
-func TestSubCategoryHandler_Update(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", "testCategory1")
-	json := strings.NewReader(`{
-		"id": 1,
-		"name": "testSubCategory1",
-		"slug": "test-sub-category-1",
-		"parent_category": "testCategory1"
-	}`)
+	t.Run(
+		"Update",
+		func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "/sub-categories/test-sub-category-1/", json)
 
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("PUT", "/sub-categories/test-sub-category-1/", json)
+			s := new(mocks.ISubCategoryService)
 
-	s := new(mocks.ISubCategoryService)
+			s.On("GetSubCategoryBySlug", subCategoryDto.Slug).Return(subCategoryDto, nil)
+			s.On("Update", subCategoryDto).Return(nil)
 
-	s.On("GetBySlug", subCategoryDto.Slug).Return(subCategoryDto, nil)
-	s.On("Update", subCategoryDto).Return(nil)
+			h := NewSubCategoryHandler(s)
 
-	h := NewSubCategoryHandler(s)
+			err := h.Update(w, r)
 
-	err := h.Update(w, r)
+			assert.NoError(t, err)
+			s.AssertExpectations(t)
+		},
+	)
 
-	assert.NoError(t, err)
-	s.AssertExpectations(t)
-}
+	t.Run(
+		"Delete",
+		func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("DELETE", "/sub-categories/test-sub-category-1/", nil)
 
-func TestSubCategoryHandler_Delete(t *testing.T) {
-	subCategoryDto := dto.NewSubCategoryModel(1, "testSubCategory1", "test-sub-category-1", "testCategory1")
+			s := new(mocks.ISubCategoryService)
 
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("DELETE", "/sub-categories/test-sub-category-1/", nil)
+			s.On("GetSubCategoryBySlug", subCategoryDto.Slug).Return(subCategoryDto, nil)
+			s.On("Delete", subCategoryDto).Return(nil)
 
-	s := new(mocks.ISubCategoryService)
+			h := NewSubCategoryHandler(s)
 
-	s.On("GetBySlug", subCategoryDto.Slug).Return(subCategoryDto, nil)
-	s.On("Delete", subCategoryDto).Return(nil)
+			err := h.Delete(w, r)
 
-	h := NewSubCategoryHandler(s)
-
-	err := h.Delete(w, r)
-
-	assert.NoError(t, err)
-	s.AssertExpectations(t)
+			assert.NoError(t, err)
+			s.AssertExpectations(t)
+		},
+	)
 }

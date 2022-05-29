@@ -7,10 +7,8 @@ import (
 )
 
 type IPostService interface {
-	GetAll() ([]dto.PostModel, error)
-	GetBySlug(string) (dto.PostModel, error)
-	GetWithCategoryQuery(string) ([]dto.PostModel, error)
-	GetWithSubCategoryQuery(string) ([]dto.PostModel, error)
+	GetPosts(map[string][]string) ([]dto.PostModel, error)
+	GetPostBySlug(string) (dto.PostModel, error)
 	Create(dto.PostModel) error
 	Update(dto.PostModel) error
 	Delete(dto.PostModel) error
@@ -26,41 +24,65 @@ func NewPostService(repo repository.IPostRepository) (postService IPostService) 
 }
 
 func (s *PostService) convertToDtoFromEntity(post entity.Post) (postDto dto.PostModel) {
-	categoryName := s.IPostRepository.GetNameFromCategoryId(post.CategoryId)
-	subCategoryName := s.IPostRepository.GetNameFromSubCategoryId(post.SubCategoryId)
-	postDto = dto.NewPostModel(post.Id, categoryName, subCategoryName, post.Title, post.Slug, post.EyeCatchingImg, post.Content, post.MetaDescription, post.IsPublic, post.CreatedAt, post.UpdatedAt)
+	postDto = dto.PostModel{
+		Id:              post.Id,
+		Title:           post.Title,
+		Slug:            post.Slug,
+		EyeCatchingImg:  post.EyeCatchingImg,
+		Content:         post.Content,
+		MetaDescription: post.MetaDescription,
+		IsPublic:        post.IsPublic,
+		CreatedAt:       post.CreatedAt,
+		UpdatedAt:       post.UpdatedAt,
+		CategoryId:      post.CategoryId,
+		CategoryName:    post.CategoryName,
+		CategorySlug:    post.CategorySlug,
+		SubCategoryId:   post.SubCategoryId,
+		SubCategoryName: post.SubCategoryName,
+		SubCategorySlug: post.SubCategorySlug,
+	}
 	return
 }
 
 func (s *PostService) convertToDtosFromEntities(posts []entity.Post) (postDtos []dto.PostModel) {
 	for _, post := range posts {
-		categoryName := s.IPostRepository.GetNameFromCategoryId(post.CategoryId)
-		subCategoryName := s.IPostRepository.GetNameFromSubCategoryId(post.SubCategoryId)
-		postDto := dto.NewPostModel(post.Id, categoryName, subCategoryName, post.Title, post.Slug, post.EyeCatchingImg, post.Content, post.MetaDescription, post.IsPublic, post.CreatedAt, post.UpdatedAt)
+		postDto := s.convertToDtoFromEntity(post)
 		postDtos = append(postDtos, postDto)
 	}
 	return
 }
 
 func (s *PostService) convertToEntityFromDto(postDto dto.PostModel) (post entity.Post) {
-	categoryId := s.IPostRepository.GetIdFromCategoryName(postDto.CategoryName)
-	subCategoryId := s.IPostRepository.GetIdFromSubCategoryName(postDto.SubCategoryName)
-	post = entity.NewPost(postDto.Id, categoryId, subCategoryId, postDto.Title, postDto.Slug, postDto.EyeCatchingImg, postDto.Content, postDto.MetaDescription, postDto.IsPublic, postDto.CreatedAt, postDto.UpdatedAt)
+	post = entity.Post{
+		Id:              postDto.Id,
+		Title:           postDto.Title,
+		Slug:            postDto.Slug,
+		EyeCatchingImg:  postDto.EyeCatchingImg,
+		Content:         postDto.Content,
+		MetaDescription: postDto.MetaDescription,
+		IsPublic:        postDto.IsPublic,
+		CreatedAt:       postDto.CreatedAt,
+		UpdatedAt:       postDto.UpdatedAt,
+		CategoryId:      postDto.CategoryId,
+		CategoryName:    postDto.CategoryName,
+		CategorySlug:    postDto.CategorySlug,
+		SubCategoryId:   postDto.SubCategoryId,
+		SubCategoryName: postDto.SubCategoryName,
+		SubCategorySlug: postDto.SubCategorySlug,
+	}
 	return
 }
 
 func (s *PostService) convertEntitiesFromDtos(postDtos []dto.PostModel) (posts []entity.Post) {
 	for _, postDto := range postDtos {
-		categoryId := s.IPostRepository.GetIdFromCategoryName(postDto.CategoryName)
-		subCategoryId := s.IPostRepository.GetIdFromSubCategoryName(postDto.SubCategoryName)
-		post := entity.NewPost(postDto.Id, categoryId, subCategoryId, postDto.Title, postDto.Slug, postDto.EyeCatchingImg, postDto.Content, postDto.MetaDescription, postDto.IsPublic, postDto.CreatedAt, postDto.UpdatedAt)
+		post := s.convertToEntityFromDto(postDto)
 		posts = append(posts, post)
 	}
 	return
 }
 
-func (s *PostService) GetAll() (postDtos []dto.PostModel, err error) {
-	posts, err := s.IPostRepository.GetAll()
+func (s *PostService) GetPosts(queryParams map[string][]string) (postDtos []dto.PostModel, err error) {
+	posts, err := s.IPostRepository.GetPosts(queryParams)
 	if err != nil {
 		return
 	}
@@ -68,26 +90,8 @@ func (s *PostService) GetAll() (postDtos []dto.PostModel, err error) {
 	return
 }
 
-func (s *PostService) GetWithCategoryQuery(categoryName string) (postDtos []dto.PostModel, err error) {
-	posts, err := s.IPostRepository.GetFilterCategory(categoryName)
-	if err != nil {
-		return
-	}
-	postDtos = s.convertToDtosFromEntities(posts)
-	return
-}
-
-func (s *PostService) GetWithSubCategoryQuery(subCategoryName string) (postDtos []dto.PostModel, err error) {
-	posts, err := s.IPostRepository.GetFilterSubCategory(subCategoryName)
-	if err != nil {
-		return
-	}
-	postDtos = s.convertToDtosFromEntities(posts)
-	return
-}
-
-func (s *PostService) GetBySlug(slug string) (postDto dto.PostModel, err error) {
-	post, err := s.IPostRepository.GetBySlug(slug)
+func (s *PostService) GetPostBySlug(slug string) (postDto dto.PostModel, err error) {
+	post, err := s.IPostRepository.GetPostBySlug(slug)
 	if err != nil {
 		return
 	}
