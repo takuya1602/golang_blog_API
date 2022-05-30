@@ -134,35 +134,3 @@ func (r *PostRepository) Delete(post entity.Post) (err error) {
 	_, err = r.Exec("delete from posts where id = $1", post.Id)
 	return
 }
-
-func (r *PostRepository) GetIdFromCategoryName(name string) (id int) {
-	err := r.QueryRow("select id from categories where name = $1", name).Scan(&id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func (r *PostRepository) GetNameFromCategoryId(id int) (name string) {
-	err := r.QueryRow("select name from categories where id = $1", id).Scan(&name)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func (r *PostRepository) GetIdFromSubCategoryName(name string) (id int) {
-	err := r.QueryRow("select id from sub_categories where name = $1", name).Scan(&id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func (r *PostRepository) GetNameFromSubCategoryId(id int) (name string) {
-	err := r.QueryRow("select name from sub_categories where id = $1", id).Scan(&name)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
